@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login • {{ app_name }}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #0b1220;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #1f2937;
+        --primary: #22d3ee;
+        --accent: #8b5cf6;
+      }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial;
+        background: radial-gradient(1200px 600px at 20% 0%, rgba(34,211,238,0.06), transparent),
+                    radial-gradient(1200px 600px at 80% 100%, rgba(139,92,246,0.08), transparent),
+                    linear-gradient(180deg, #0b1220, #0f172a);
+        color: var(--text);
+      }
+      .wrap { min-height: 100%; display:flex; align-items:center; justify-content:center; padding: 32px 16px; }
+      .card { width: 100%; max-width: 440px; background: rgba(11,18,32,0.95); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: 0 12px 40px rgba(0,0,0,0.45); }
+      .brand { display:flex; align-items:center; gap:12px; margin-bottom: 12px; }
+      .logo { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; background: linear-gradient(135deg, var(--primary), var(--accent)); color:#04121a; box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+      h1 { margin: 0; font-size: 18px; letter-spacing: .3px; }
+      p.sub { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+      .field { margin-top: 12px; }
+      label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      .input { width: 100%; padding: 12px 12px; color: var(--text); background: #0b1220; border: 1px solid var(--border); border-radius: 10px; outline: none; }
+      .input:focus { border-color: #334155; box-shadow: 0 0 0 2px rgba(34,211,238,0.15); }
+      .btn { width: 100%; margin-top: 16px; padding: 12px 14px; border: 0; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #04121a; font-weight: 800; cursor: pointer; }
+      .footer { margin-top: 12px; text-align:center; color: var(--muted); font-size: 12px; }
+      .alert { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(239,68,68,0.14); color: #fecaca; border: 1px solid rgba(239,68,68,0.35); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <form class="card" method="post" action="/login">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">CA</div>
+          <div>
+            <h1>Sign in to {{ app_name }}</h1>
+            <p class="sub">Please enter your credentials</p>
+          </div>
+        </div>
+        {% if error %}
+          <div class="alert">{{ error }}</div>
+        {% endif %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        <div class="field">
+          <label>Username</label>
+          <input class="input" type="text" name="username" placeholder="Username" required />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input class="input" type="password" name="password" placeholder="Password" required />
+        </div>
+        <button class="btn" type="submit">Sign In</button>
+        <div class="footer">Protected access • Contact admin if you forgot credentials</div>
+      </form>
+    </div>
+  </body>
+  </html>

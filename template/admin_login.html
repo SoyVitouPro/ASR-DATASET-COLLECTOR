@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Login • {{ app_name }}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: '#22d3ee',
+              accent: '#8b5cf6',
+              bg: '#0f172a',
+              panel: '#0b1220',
+            },
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(1200px 600px at 20% 0%, rgba(34,211,238,0.06), transparent)',
+              'gradient-radial-2': 'radial-gradient(1200px 600px at 80% 100%, rgba(139,92,246,0.08), transparent)',
+            },
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-slate-900 text-gray-200 min-h-screen bg-gradient-to-br from-slate-900 via-gradient-radial to-slate-900 bg-gradient-radial-2 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="bg-slate-800/95 border border-slate-700 rounded-xl p-8 backdrop-blur-sm">
+        <!-- Header -->
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-gradient-to-br from-cyan-400 to-violet-500 rounded-lg flex items-center justify-center text-slate-900 font-bold text-xl mb-4 mx-auto shadow-lg">
+            🔐
+          </div>
+          <h1 class="text-2xl font-bold text-cyan-400 mb-2">Admin Access</h1>
+          <p class="text-gray-400 text-sm">Enter admin password to continue</p>
+        </div>
+
+        <!-- Login Form -->
+        <form method="post" action="/admin" class="space-y-6">
+          {% if error %}
+            <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+              {{ error }}
+            </div>
+          {% endif %}
+
+          <div class="space-y-2">
+            <label for="password" class="text-sm font-medium text-gray-200">Admin Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              class="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-900/60 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 placeholder:text-gray-500"
+              placeholder="Enter admin password"
+              autofocus
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="w-full px-6 py-3 bg-gradient-to-r from-cyan-400 to-violet-500 text-slate-900 font-semibold rounded-lg hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-400/30 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            Access Admin Panel
+          </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center">
+          <a href="/" class="text-gray-400 hover:text-gray-200 text-sm transition-colors duration-200">
+            ← Back to Home
+          </a>
+        </div>
+      </div>
+
+      <!-- Security Notice -->
+      <div class="mt-6 text-center">
+        <p class="text-gray-500 text-xs">
+          🔒 Protected admin area - authorized access only
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Clear any stored password on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const passwordField = document.getElementById('password');
+        passwordField.value = '';
+
+        // Focus on password field
+        passwordField.focus();
+
+        // Handle Enter key submission
+        passwordField.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.form.submit();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

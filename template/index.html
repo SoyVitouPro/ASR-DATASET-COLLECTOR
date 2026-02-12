@@ -1,0 +1,2389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+      :root {
+        --bg: #0f172a;        /* slate-900 */
+        --panel: #111827;     /* gray-900 */
+        --panel-2: #0b1220;   /* darker */
+        --text: #e5e7eb;      /* gray-200 */
+        --muted: #9ca3af;     /* gray-400 */
+        --primary: #22d3ee;   /* cyan-400 */
+        --accent: #8b5cf6;    /* violet-500 */
+        --border: #1f2937;    /* gray-800 */
+      }
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial; background: linear-gradient(180deg, var(--bg), var(--panel-2)); background-attachment: fixed; background-repeat: no-repeat; background-size: cover; color: var(--text); }
+      header { display:none; }
+      .stats { display:flex; align-items:center; gap:14px; justify-content:flex-start; font-size: 14px; }
+      .stats .metric { 
+        display: inline-block;
+        color: var(--muted);
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.04);
+      }
+      .stats .metric-verified { background: rgba(16,185,129,0.12); border-color: #10b981; }
+      .stats .metric-total    { background: rgba(34,211,238,0.12); border-color: #22d3ee; }
+      .stats .metric-channel  { background: rgba(139,92,246,0.12); border-color: #8b5cf6; }
+      .stats .metric-left     { background: rgba(245,158,11,0.12); border-color: #f59e0b; }
+      .stats strong { color: var(--text); }
+      .chips { display:flex; align-items:center; gap:8px; margin-left: 18px; flex-wrap: wrap; }
+      .chip { padding: 2px 8px; font-size: 12px; line-height: 18px; border-radius: 999px; border: 1px solid var(--border); background: #0b1220; color: var(--text); cursor: pointer; user-select: none; }
+      .chip:hover { border-color: var(--accent); }
+      .chip.copied { border-color: #10b981; color: #10b981; }
+      .chip-green { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.08); }
+      .chip-yellow { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.08); }
+      .container { max-width: 1760px; margin: 0 auto; padding: 32px 36px; padding-bottom: 6vh; }
+      .card { background: rgba(17,24,39,0.85); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+      .upload { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: linear-gradient(135deg, rgba(34,211,238,0.08), rgba(139,92,246,0.08)); border: 1px dashed rgba(34,211,238,0.35); padding: 16px; border-radius: 10px; }
+      .field { flex: 1 1 280px; }
+      .label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      .input { width: 100%; padding: 10px; color: var(--text); background: #0b1220; border: 1px solid var(--border); border-radius: 8px; }
+      .btn { padding: 10px 14px; border: 0; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: #04121a; font-weight: 700; cursor: pointer; transition: transform .05s ease; }
+      .btn:hover { transform: translateY(-1px); }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; filter: grayscale(0.2); }
+      /* Keep Clear button looking normal but inert when disabled */
+      .btn-split[disabled] { opacity: 1 !important; filter: none !important; cursor: default !important; }
+      .btn-split[disabled]:hover { transform: none !important; }
+      .btn-sm { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
+      .btn-yellow { background: linear-gradient(135deg, #facc15, #f59e0b); color: #fff; }
+      .btn-green { background: linear-gradient(135deg, #10b981, #22c55e); color: #fff; }
+      .btn-verify { background: linear-gradient(135deg, #10b981, #22c55e); color: #fff; border: 0; }
+      .btn-delete { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; border: 0; }
+      /* Action color variants (white text) */
+      .btn-emerald { background: linear-gradient(135deg, #10b981, #059669); color: #fff !important; }
+      .btn-slate { background: linear-gradient(135deg, #64748b, #475569); color: #fff !important; }
+      .btn-amber { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff !important; }
+      .btn-violet { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff !important; }
+      .btn-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); color: #fff !important; }
+      .btn-rose { background: linear-gradient(135deg, #f43f5e, #e11d48); color: #fff !important; }
+      .verify-action { color: #fff !important; }
+      .mt { margin-top: 12px; }
+      .list { display: grid; grid-template-columns: 1fr; gap: 16px; }
+      .item { background: rgba(11,18,32,0.92); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+      .item h4 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
+      .muted { color: var(--muted); font-size: 12px; }
+      .badge { display:inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+      /* Equalizer animation for playing state */
+      .eq { display: none; margin-left: 8px; vertical-align: middle; }
+      .name.playing .eq { display: inline-flex; gap: 2px; }
+      .eq i { display: inline-block; width: 3px; height: 10px; background: var(--primary); animation: eq-bounce 0.8s infinite ease-in-out; opacity: 0.85; border-radius: 1px; }
+      .eq i:nth-child(2) { animation-delay: 0.1s; }
+      .eq i:nth-child(3) { animation-delay: 0.2s; }
+      @keyframes eq-bounce { 0%,100%{ transform: scaleY(0.4); opacity:0.6;} 50%{ transform: scaleY(1); opacity:1;} }
+      /* Overlay */
+      .overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.6); display:none; align-items:center; justify-content:center; z-index: 50; backdrop-filter: blur(2px); opacity: 0; transition: opacity .18s ease; }
+      .overlay.is-open { opacity: 1; }
+      .spinner { width: 44px; height: 44px; border: 4px solid #334155; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .overlay-panel { background:#0b1220; border:1px solid var(--border); border-radius: 12px; padding: 16px 20px; min-width: 260px; text-align:center; opacity: .98; transform: translateY(10px) scale(.98); transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s ease; will-change: transform, opacity; }
+      .overlay.is-open .overlay-panel { transform: translateY(0) scale(1); opacity: 1; }
+      /* Confirm modal styling */
+      .confirm-panel { min-width: 480px; padding: 20px 24px; text-align: left; }
+      .confirm-title { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+      .confirm-title img { width: 28px; height: 28px; border-radius: 6px; }
+      .confirm-title span { font-weight: 700; font-size: 16px; color: var(--text); }
+      /* Progress bar for long ops */
+      .progress { position: relative; height: 8px; background: rgba(2,132,199,0.15); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+      .progress .bar { position:absolute; top:0; bottom:0; width:40%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 999px; animation: indet 1s infinite; }
+      @keyframes indet { 0%{ left:-40%; } 100%{ left:100%; } }
+      .confirm-text { color: var(--muted); font-size: 14px; }
+      .confirm-actions { margin-top: 14px; display:flex; align-items:center; justify-content: space-between; }
+      .page-footer { text-align:center; color: var(--muted); padding: 16px 0 28px; font-size: 12px; }
+      .alert { padding: 10px 12px; border-radius: 8px; margin-top: 10px; }
+      .alert-error { background: rgba(239,68,68,0.15); color: #fecaca; border: 1px solid rgba(239,68,68,0.4); }
+      .label-cell { width: 45%; position: relative; }
+      .label-textarea { width: 100%; min-height: 100px; padding: 10px; color: var(--text); background: #0b1220; border: 1px solid var(--border); border-radius: 8px; resize: vertical; outline: none; }
+      .tag-a { color: #22c55e; font-weight: 800; }
+      .tag-b { color: #f59e0b; font-weight: 800; }
+      .tag-c { color: #8b5cf6; font-weight: 800; }
+      /* Rendered voice segments */
+      .seg-a { background: rgba(34,197,94,0.12); border-radius: 4px; padding: 0 2px; }
+      .seg-b { background: rgba(245,158,11,0.12); border-radius: 4px; padding: 0 2px; }
+      .seg-c { background: rgba(139,92,246,0.12); border-radius: 4px; padding: 0 2px; }
+      .tag-bracket { color: var(--primary); font-weight: 800; }
+      /* removed preview styles */
+      /* Mini voice toolbar shown on text selection */
+      .voice-toolbar { position: absolute; right: 10px; bottom: 10px; display: none; gap: 6px; z-index: 15; background: rgba(15,23,42,0.98); border: 1px solid var(--border); border-radius: 8px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+      .voice-toolbar .btn { padding: 4px 8px; font-size: 12px; border-radius: 6px; font-weight: 800; }
+      /* Clean toolbar shown on editor focus */
+      .clean-toolbar { position: absolute; left: 10px; bottom: 10px; display: none; gap: 6px; z-index: 15; background: rgba(15,23,42,0.98); border: 1px solid var(--border); border-radius: 8px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+      .clean-toolbar .btn { padding: 4px 8px; font-size: 12px; border-radius: 6px; font-weight: 800; }
+      .row-actions { margin-top: 8px; display:flex; gap:8px; align-items:center; }
+      .time-link { color: var(--text); text-decoration: none; }
+      .time-link:hover { text-decoration: underline; }
+      /* Trim UI overlayed on waveform */
+      .trim { position: absolute; top: 0; left: 0; right: 0; bottom: 26px; pointer-events: none; }
+      .trim .sel { position:absolute; top:0; bottom:0; left:0; right:0; background: linear-gradient(135deg, rgba(34,211,238,0.25), rgba(139,92,246,0.25)); pointer-events:none; }
+      .trim .handle { position:absolute; top:0; bottom:0; width:4px; background: var(--accent); cursor: ew-resize; box-shadow: 0 0 0 1px #1f2937; pointer-events:auto; opacity:0.9; }
+      .trim .handle.right { background: var(--primary); }
+      .actions { display:grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 6px; }
+      /* Waveform */
+      .wave-wrap { position: relative; width: 520px; height: 120px; margin-top: 8px; }
+      .wave { width: 100%; height: calc(100% - 26px); display: block; background: #0b1220; border: 1px solid var(--border); border-radius: 6px; }
+      .wave-dim { position: absolute; top: 0; bottom: 26px; pointer-events: none; background: rgba(2,6,23,0.6); }
+      .wave-dim.left { left: 0; }
+      .wave-dim.right { right: 0; }
+      .wave-head { position:absolute; top:0; bottom:26px; width:3px; background: var(--accent); pointer-events:auto; opacity: 0.0; cursor: ew-resize; }
+      /* Time zoom + scroll */
+      .hzoom-controls { display:flex; align-items:center; gap:8px; margin-top:6px; }
+      .btn.btn-xs { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
+      .hscroll { position: relative; height: 10px; flex: 1; background: rgba(148,163,184,0.25); border-radius: 999px; cursor: pointer; }
+      .hscroll .hthumb { position:absolute; top:0; bottom:0; left:0; width:100%; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 999px; cursor: grab; }
+      /* Simple replacement animation */
+      .replacing .wave { filter: brightness(0.7); }
+      .replace-badge { position:absolute; top:6px; right:6px; background: var(--accent); color:#04121a; font-weight:700; padding:2px 6px; border-radius:6px; font-size:12px; opacity:0; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease; pointer-events:none; }
+      .replacing .replace-badge { opacity:1; transform: translateY(0); }
+      @keyframes replacedPulse { 0%{ box-shadow:0 0 0 0 rgba(34,211,238,.55);} 100%{ box-shadow:0 0 0 12px rgba(34,211,238,0);} }
+      .replaced { animation: replacedPulse .6s ease-out 1; }
+      .meta { display:grid; grid-template-rows: repeat(2, auto); gap:6px; }
+      /* Skeleton shimmer */
+      .wave-skel { position:absolute; top:0; left:0; right:0; bottom:26px; border-radius:6px; overflow:hidden; background: #0f172a; }
+      .wave-skel::before { content:""; position:absolute; inset:-20%; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.08), rgba(255,255,255,0.02)); transform: translateX(-100%); animation: shimmer 1.2s infinite; }
+      @keyframes shimmer { 100% { transform: translateX(100%);} }
+      /* Roomier rows */
+      td.name { padding-top: 14px !important; padding-bottom: 14px !important; }
+      tr.file-row.locked { opacity: 0.8; }
+      tr.file-row.locked .label-textarea { background: rgba(148,163,184,0.15); }
+      tr.file-row.locked .actions .btn { cursor: not-allowed; }
+    </style>
+  </head>
+  <body>
+    <!-- Main Content Area -->
+  <div class="flex-1" id="main-content">
+        <header></header>
+        <div class="container">
+
+          <section class="card stats" style="margin-top: 36px;">
+        <div class="stats" id="stats-summary" style="gap:18px; flex-wrap:wrap;">
+          <span class="metric metric-verified">Verified: <strong id="stat_verified">{{ verified_count }}</strong></span>
+          <span class="metric metric-total">Total: <strong id="stat_total">{{ audio_count }}</strong></span>
+          <span class="metric metric-channel">Channel: <strong id="stat_channel">{{ audio_count }}</strong></span>
+          <span class="metric metric-left">Remaining: <strong id="stat_left">0</strong></span>
+        </div>
+        <div class="chips" aria-label="Quick insert tags">
+          <!-- Green group: display without brackets, copy with brackets -->
+          <button type="button" class="chip chip-green copy-chip" data-copy="[laugh]">laugh</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[sad]">sad</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[cry]">cry</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[hmm]">hmm</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[អើ]">អើ</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[អា]">អា</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[ohhh]">ohhh</button>
+          <button type="button" class="chip chip-green copy-chip" data-copy="[umm]">umm</button>
+          <!-- Yellow group: Khmer vowels, copy as-is -->
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឣ">ឣ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឤ">ឤ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឥ">ឥ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឦ">ឦ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឧ">ឧ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឨ">ឨ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឩ">ឩ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឪ">ឪ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឫ">ឫ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឬ">ឬ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឭ">ឭ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឮ">ឮ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឯ">ឯ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឰ">ឰ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឱ">ឱ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឲ">ឲ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="ឳ">ឳ</button>
+          <button type="button" class="chip chip-yellow copy-chip" data-copy="៎">៎</button>
+        </div>
+      </section>
+
+      <section class="card mt" style="margin-top: 20px;">
+        <header style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div>
+            <h3 style="margin:0;">Files</h3>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <label class="muted">Verify</label>
+            <select id="filter_verified" class="input" style="width:140px;">
+              <option value="all" selected>All</option>
+              <option value="done">Done</option>
+              <option value="none">None</option>
+            </select>
+            <label class="muted">Lock</label>
+            <select id="filter_lock" class="input" style="width:140px;">
+              <option value="all" selected>All</option>
+              <option value="locked">Locked</option>
+              <option value="unlocked">Unlocked</option>
+            </select>
+            <label class="muted">Channel</label>
+            <select id="filter_channel" class="input" style="width:200px;">
+              <option value="all" selected>All</option>
+              {% for ch in channels %}
+                <option value="{{ ch }}">{{ ch }}</option>
+              {% endfor %}
+            </select>
+            <label class="muted">Search</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="radio" name="search_type" value="filename" checked>
+                <span>Files</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 5px;">
+                <input type="radio" name="search_type" value="label">
+                <span>Labels</span>
+              </label>
+              <input id="search_input" class="input" placeholder="Type to search files..." style="width:180px;" />
+            </div>
+            <button id="clear_anno_btn" class="btn btn-rose" type="button" title="Clear annotations for selected channel">Clear Annotation</button>
+            <button id="remove_audio_btn" class="btn btn-green" type="button" title="Remove unverified audios of selected channel">Remove Audio</button>
+            <button id="back_page_btn" class="btn btn-yellow" type="button" title="Previous 5">Back</button>
+            <button id="next_page_btn" class="btn btn-yellow" type="button" title="Next 5">Next</button>
+          </div>
+        </header>
+
+        <div class="mt" style="overflow:auto; border: 1px solid var(--border); border-radius: 10px;">
+          <table style="width:100%; border-collapse:collapse; min-width:1200px;">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Name</th>
+                <th class="label-cell" style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Label</th>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Lang/Gender</th>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Channel</th>
+                <th style="text-align:left; padding:10px; border-bottom:1px solid var(--border);">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="files_tbody">
+              {% if latest and latest|length > 0 %}
+                {% for item in latest %}
+                  <tr class="file-row {% if item.locked %}locked{% endif %}" data-id="{{ item.id }}" data-name="{{ item.filename | lower }}" data-verified="{{ 'true' if item.verify else 'false' }}" data-channel="{{ item.youtube_channel or '' }}" data-locked="{{ 'true' if item.locked else 'false' }}">
+                    <td class="name" style="padding:10px; border-bottom:1px solid var(--border);">
+                      <a class="file-link" href="{{ item.public_url }}" target="_blank" data-filename="{{ item.filename }}" style="color: var(--primary); text-decoration:none;">{{ item.filename }}</a>
+                      <span class="muted"> — </span>
+              <a class="time-link" href="{{ item.public_url }}" download title="Download">{{ item.duration_human }}</a>
+              <button class="btn btn-sm btn-slate btn-zoom-out" title="Shorter waveform" type="button">−</button>
+              <button class="btn btn-sm btn-slate btn-zoom-in" title="Taller waveform" type="button">+</button>
+              <button class="btn btn-sm btn-slate btn-play" title="Play/Pause" type="button"><i class="fa-solid fa-play"></i></button>
+              <button class="btn btn-sm btn-slate btn-reset" title="Restart" type="button"><i class="fa-solid fa-rotate-left"></i></button>
+              <button class="btn btn-sm btn-slate btn-lock" title="Lock/Unlock" type="button"><i class="fa-solid {% if item.locked %}fa-lock{% else %}fa-lock-open{% endif %}"></i></button>
+                      <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                      <div class="wave-wrap" data-duration="{{ item.duration_seconds or 0 }}">
+                        <div class="wave-skel"></div>
+                <canvas class="wave" data-scale="1" data-url="{{ item.public_url }}"></canvas>
+                        <div class="wave-dim left" style="width:0%;"></div>
+                        <div class="wave-dim right" style="width:0%;"></div>
+                        <div class="trim">
+                          <div class="sel" style="left:0%; right:0%;"></div>
+                          <div class="handle left" style="left:0%;"></div>
+                          <div class="handle right" style="right:0%;"></div>
+                        </div>
+                        <div class="wave-head" style="left:0%;"></div>
+                        <div class="replace-badge">Replacing…</div>
+                        <div class="hzoom-controls">
+                          <button class="btn btn-xs btn-slate btn-hz-out" type="button" title="Time zoom out">−</button>
+                          <div class="hscroll"><div class="hthumb" style="left:0%; width:100%;"></div></div>
+                          <button class="btn btn-xs btn-slate btn-hz-in" type="button" title="Time zoom in">+</button>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="label-cell" style="padding:10px; border-bottom:1px solid var(--border);">
+                      <div class="label-textarea" contenteditable="{{ 'false' if item.locked else 'true' }}" data-filename="{{ item.filename }}">{{ item.transcript if item.transcript else '' }}</div>
+                    </td>
+                    <td style="padding:10px; border-bottom:1px solid var(--border);">
+                      <div class="meta">
+                        <select class="input lang-select" data-filename="{{ item.filename }}" style="max-width:160px;" {% if item.locked %}disabled{% endif %}>
+                          {% set langs = ['', 'Khmer', 'English', 'Chinese', 'Vietnamese', 'Mixing-Language'] %}
+                          {% for l in langs %}
+                            <option value="{{ l }}" {% if item.language == l %}selected{% endif %}>{{ l if l else 'None' }}</option>
+                          {% endfor %}
+                        </select>
+                        <select class="input gender-select" data-filename="{{ item.filename }}" style="max-width:160px;" {% if item.locked %}disabled{% endif %}>
+                          {% set genders = ['', 'Male', 'Female', 'Other'] %}
+                          {% for g in genders %}
+                            <option value="{{ g }}" {% if item.gender == g %}selected{% endif %}>{{ g if g else 'None' }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </td>
+                    <td style="padding:10px; border-bottom:1px solid var(--border);">{{ item.youtube_channel or '' }}</td>
+                    <td style="padding:10px; border-bottom:1px solid var(--border);">
+                      <div class="actions">
+                        <button class="{% if item.verify %}btn btn-verify verify-action{% else %}btn btn-slate verify-action{% endif %}" data-id="{{ item.id }}" data-filename="{{ item.filename }}" data-verified="{{ 'true' if item.verify else 'false' }}">{{ 'Verified' if item.verify else 'Verify' }}</button>
+                        <button class="btn btn-slate btn-save" data-id="{{ item.id }}" data-filename="{{ item.filename }}" title="Save transcript">Save</button>
+                        <button class="btn btn-amber btn-gen" data-id="{{ item.id }}" data-filename="{{ item.filename }}" title="Generate transcript">Gen</button>
+                        <button class="btn btn-slate btn-split" data-id="{{ item.id }}" data-filename="{{ item.filename }}" title="Clear spaces in label">Clear [_]</button>
+                        <button class="btn btn-cyan btn-trim" data-id="{{ item.id }}" data-filename="{{ item.filename }}" title="Apply trim">Trim</button>
+                        <button class="btn btn-rose btn-delete" data-id="{{ item.id }}" data-filename="{{ item.filename }}" title="Delete record">Delete</button>
+                      </div>
+                    </td>
+                    
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="5" class="muted" style="text-align:center; padding:18px;">No files yet.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    
+
+    <div id="loading-overlay" class="overlay">
+      <div class="overlay-panel">
+        <div class="spinner"></div>
+        <div id="loading-text" class="muted">Starting…</div>
+      </div>
+    </div>
+
+    <div id="confirm-overlay" class="overlay" style="display:none;">
+      <div class="overlay-panel confirm-panel">
+        <div class="confirm-title">
+          <img src="/favicon.png" alt="logo" />
+          <span id="confirm-title-text">Confirm</span>
+        </div>
+        <div id="confirm-text" class="confirm-text">Are you sure?</div>
+        <div class="confirm-actions">
+          <button id="confirm-no" class="btn btn-slate" type="button">No</button>
+          <button id="confirm-yes" class="btn btn-rose" type="button">Yes, Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clear Annotations Modal -->
+    <div id="clear-overlay" class="overlay" style="display:none;">
+      <div class="overlay-panel confirm-panel" style="min-width: 520px;">
+        <div class="confirm-title">
+          <img src="/favicon.png" alt="logo" />
+          <span>Clear Annotations</span>
+        </div>
+        <div class="confirm-text" id="clear-desc">This will reset transcripts, verify, language, and gender for the selected channel.</div>
+        <div class="field" style="margin-top: 12px;">
+          <label class="label">Channel</label>
+          <input id="clear_channel_input" class="input" type="text" readonly />
+        </div>
+        <div class="field" style="margin-top: 8px;">
+          <label class="label">Password</label>
+          <input id="clear_password_input" class="input" type="password" placeholder="Enter your password to confirm" />
+        </div>
+        <div class="confirm-actions" style="margin-top: 14px;">
+          <button id="clear-cancel" class="btn btn-slate" type="button">Cancel</button>
+          <button id="clear-confirm" class="btn btn-rose" type="button">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Audio Modal -->
+    <div id="remove-overlay" class="overlay" style="display:none;">
+      <div class="overlay-panel confirm-panel" style="min-width: 520px;">
+        <div class="confirm-title">
+          <img src="/favicon.png" alt="logo" />
+          <span>Remove Audio</span>
+        </div>
+        <div class="confirm-text">This will permanently delete all UNVERIFIED audio files and their records for the selected channel.</div>
+        <div class="field" style="margin-top: 12px;">
+          <label class="label">Channel</label>
+          <input id="remove_channel_input" class="input" type="text" readonly />
+        </div>
+        <div class="field" style="margin-top: 8px;">
+          <label class="label">Password</label>
+          <input id="remove_password_input" class="input" type="password" placeholder="Admin password" />
+        </div>
+        <div id="remove-progress" class="progress" style="display:none;"><div class="bar"></div></div>
+        <div class="confirm-actions" style="margin-top: 14px;">
+          <button id="remove-cancel" class="btn btn-slate" type="button">Cancel</button>
+          <button id="remove-confirm" class="btn btn-green" type="button">Remove</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Result Modal -->
+    <div id="remove-result-overlay" class="overlay" style="display:none;">
+      <div class="overlay-panel confirm-panel" style="min-width: 520px;">
+        <div class="confirm-title">
+          <img src="/favicon.png" alt="logo" />
+          <span id="remove-result-title">Removed Successfully</span>
+        </div>
+        <div id="remove-result-body" class="confirm-text">Done.</div>
+        <div class="confirm-actions" style="margin-top: 14px;">
+          <button id="remove-result-close" class="btn btn-green" type="button">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lock/Unlock Modal -->
+    <div id="unlock-overlay" class="overlay" style="display:none;">
+      <div class="overlay-panel confirm-panel" style="min-width: 420px;">
+        <div class="confirm-title">
+          <img src="/favicon.png" alt="logo" />
+          <span id="lock-modal-title">Unlock Record</span>
+        </div>
+        <div class="confirm-text">Enter admin password to unlock <strong id="unlock-name"></strong>.</div>
+        <div class="field" style="margin-top: 8px;">
+          <label class="label">Password</label>
+          <input id="unlock_password_input" class="input" type="password" placeholder="Admin password" />
+        </div>
+        <div class="confirm-actions" style="margin-top: 14px;">
+          <button id="unlock-cancel" class="btn btn-slate" type="button">Cancel</button>
+          <button id="unlock-confirm" class="btn btn-green" type="button">Unlock</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Navigation function for smooth page transitions - defined early to be available to sidebar buttons
+      function navigateToPage(page) {
+        const mainContent = document.getElementById('main-content');
+        const sidebar = document.getElementById('sidebar');
+
+        // Add fade-out animation
+        if (mainContent) {
+          mainContent.style.transition = 'all 0.3s ease-in-out';
+          mainContent.style.opacity = '0';
+          mainContent.style.transform = 'scale(0.95)';
+
+          setTimeout(() => {
+            if (page === 'admin') {
+              // Navigate to admin page (with password)
+              window.location.href = '/admin';
+            } else if (page === 'tts') {
+              // Navigate to TTS page
+              window.location.href = '/tts';
+            } else if (page === 'asr') {
+              // Stay on current page (ASR)
+              mainContent.style.opacity = '1';
+              mainContent.style.transform = 'scale(1)';
+            }
+          }, 300);
+        } else {
+          // Fallback if main-content not found
+          if (page === 'admin') {
+            window.location.href = '/admin';
+          } else if (page === 'tts') {
+            window.location.href = '/tts';
+          } else if (page === 'asr') {
+            window.location.href = '/';
+          }
+        }
+      }
+
+      const form = document.getElementById('job-form');
+      const overlay = document.getElementById('loading-overlay');
+      const loadingText = document.getElementById('loading-text');
+      const confirmOverlay = document.getElementById('confirm-overlay');
+      const clearOverlay = document.getElementById('clear-overlay');
+      const confirmText = document.getElementById('confirm-text');
+      const confirmYes = document.getElementById('confirm-yes');
+      const confirmNo = document.getElementById('confirm-no');
+      const confirmTitle = document.getElementById('confirm-title-text');
+      const tbody = document.getElementById('files_tbody');
+      const searchInput = document.getElementById('search_input');
+      const filterVerified = document.getElementById('filter_verified');
+      const filterChannel = document.getElementById('filter_channel');
+      const filterLock = document.getElementById('filter_lock');
+      const clearBtn = document.getElementById('clear_anno_btn');
+      const clearChannelInput = document.getElementById('clear_channel_input');
+      const clearPasswordInput = document.getElementById('clear_password_input');
+      const clearCancel = document.getElementById('clear-cancel');
+      const clearConfirm = document.getElementById('clear-confirm');
+      const removeBtn = document.getElementById('remove_audio_btn');
+      const removeOverlay = document.getElementById('remove-overlay');
+      const removeChannelInput = document.getElementById('remove_channel_input');
+      const removeCancel = document.getElementById('remove-cancel');
+      const removeConfirm = document.getElementById('remove-confirm');
+      const removeProgress = document.getElementById('remove-progress');
+      const removeResultOverlay = document.getElementById('remove-result-overlay');
+      const removeResultClose = document.getElementById('remove-result-close');
+      const removeResultBody = document.getElementById('remove-result-body');
+      const removePasswordInput = document.getElementById('remove_password_input');
+      // Unlock modal
+      const unlockOverlay = document.getElementById('unlock-overlay');
+      const unlockPasswordInput = document.getElementById('unlock_password_input');
+      const unlockConfirm = document.getElementById('unlock-confirm');
+      const unlockCancel = document.getElementById('unlock-cancel');
+      const unlockName = document.getElementById('unlock-name');
+      const lockModalTitle = document.getElementById('lock-modal-title');
+      let pendingUnlockRow = null;
+      let pendingUnlockId = null;
+      let pendingDesiredLocked = null; // true to lock, false to unlock
+      // Toasts
+      const toastRoot = document.createElement('div');
+      toastRoot.id = 'toast-root';
+      toastRoot.style.position = 'fixed';
+      toastRoot.style.top = '16px';
+      toastRoot.style.right = '16px';
+      toastRoot.style.zIndex = '9999';
+      document.body.appendChild(toastRoot);
+      function showToast(text, type='info') {
+        const el = document.createElement('div');
+        el.style.marginTop = '8px';
+        el.style.padding = '10px 14px';
+        el.style.borderRadius = '8px';
+        el.style.fontWeight = '700';
+        el.style.boxShadow = '0 10px 24px rgba(0,0,0,0.35)';
+        el.style.border = '1px solid var(--border)';
+        el.style.background = type==='error' ? 'rgba(244,63,94,0.15)' : (type==='success' ? 'rgba(34,197,94,0.15)' : 'rgba(2,132,199,0.15)');
+        el.style.color = 'var(--text)';
+        el.textContent = text;
+        toastRoot.appendChild(el);
+        setTimeout(() => { try { toastRoot.removeChild(el); } catch {} }, 2200);
+      }
+      // Modal helpers: lock page scroll when any modal is open
+      let __openModalCount = 0;
+      function openModal(el) {
+        if (!el) return;
+        if (el.style.display !== 'flex') {
+          el.style.display = 'flex';
+          // next frame to allow CSS transition
+          requestAnimationFrame(() => { el.classList.add('is-open'); });
+          __openModalCount++;
+        } else {
+          el.classList.add('is-open');
+        }
+        try { document.documentElement.style.overflow = 'hidden'; } catch {}
+        try { document.body.style.overflow = 'hidden'; } catch {}
+      }
+      function closeModal(el) {
+        if (!el) return;
+        if (el.style.display !== 'none') {
+          // start fade/slide out
+          el.classList.remove('is-open');
+          const HIDE_DELAY = 230; // keep in sync with CSS
+          setTimeout(() => {
+            el.style.display = 'none';
+          }, HIDE_DELAY);
+          __openModalCount = Math.max(0, __openModalCount - 1);
+        }
+        if (__openModalCount === 0) {
+          try { document.documentElement.style.overflow = ''; } catch {}
+          try { document.body.style.overflow = ''; } catch {}
+        }
+      }
+      let pollTimer = null;
+      const player = new Audio();
+      try { player.autoplay = false; } catch {}
+      try { player.loop = false; } catch {}
+
+      // Lock helpers: apply lock state to a row
+      function applyLockState(row, locked) {
+        if (!row) return;
+        row.dataset.locked = locked ? 'true' : 'false';
+        if (locked) row.classList.add('locked'); else row.classList.remove('locked');
+        // Toggle icon
+        const lockBtn = row.querySelector('.btn-lock i');
+        if (lockBtn) {
+          lockBtn.classList.remove('fa-lock', 'fa-lock-open');
+          lockBtn.classList.add(locked ? 'fa-lock' : 'fa-lock-open');
+        }
+        // Disable contenteditable
+        const area = row.querySelector('.label-textarea');
+        if (area) area.setAttribute('contenteditable', locked ? 'false' : 'true');
+        // Disable selects
+        row.querySelectorAll('select.lang-select, select.gender-select').forEach(sel => { sel.disabled = !!locked; });
+        // Disable action buttons except play/reset/lock
+        row.querySelectorAll('.actions .btn, .btn-zoom-in, .btn-zoom-out, .btn-hz-in, .btn-hz-out').forEach(btn => { btn.disabled = !!locked; });
+        // Don't disable play/reset
+        row.querySelectorAll('.btn-play, .btn-reset, .btn-lock').forEach(btn => { btn.disabled = false; });
+        // Disable trim handles interactions
+        const trim = row.querySelector('.wave-wrap .trim');
+        if (trim) trim.style.pointerEvents = locked ? 'none' : '';
+      }
+      let currentPlayingLink = null;
+      let currentWaveHead = null;
+      // Copy helper for bracket chips
+      document.addEventListener('click', async (e) => {
+        const chip = e.target.closest('.copy-chip');
+        if (!chip) return;
+        const text = chip.dataset.copy || chip.textContent || '';
+        try {
+          await navigator.clipboard.writeText(text);
+          chip.classList.add('copied');
+          const prev = chip.textContent;
+          chip.textContent = 'Copied!';
+          setTimeout(() => { chip.classList.remove('copied'); chip.textContent = prev; }, 700);
+        } catch {
+          // Fallback: select and copy via execCommand
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); chip.classList.add('copied'); const prev = chip.textContent; chip.textContent = 'Copied!'; setTimeout(() => { chip.classList.remove('copied'); chip.textContent = prev; }, 700); } catch {}
+          finally { document.body.removeChild(ta); }
+        }
+      });
+
+      // Clear annotations modal logic
+      function openClearModal() {
+        const ch = (filterChannel && filterChannel.value !== 'all') ? filterChannel.value : '';
+        if (!ch) { alert('Please select a channel first.'); return; }
+        if (clearChannelInput) clearChannelInput.value = ch;
+        if (clearPasswordInput) clearPasswordInput.value = '';
+        openModal(clearOverlay);
+        setTimeout(() => { try { clearPasswordInput.focus(); } catch {} }, 0);
+      }
+      function closeClearModal() { closeModal(clearOverlay); }
+      if (clearBtn) clearBtn.addEventListener('click', openClearModal);
+      if (clearCancel) clearCancel.addEventListener('click', closeClearModal);
+      if (clearConfirm) clearConfirm.addEventListener('click', async () => {
+        const ch = clearChannelInput.value || '';
+        const pw = clearPasswordInput.value || '';
+        if (!ch) { alert('Channel is required'); return; }
+        if (!pw) { alert('Password is required'); return; }
+        clearConfirm.disabled = true; const prev = clearConfirm.textContent; clearConfirm.textContent = 'Clearing…';
+        try {
+          const r = await fetch('/clear-channel', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ channel: ch, password: pw }) });
+          if (r.ok) {
+            closeClearModal();
+            await loadPage();
+            showToast('Annotations cleared for '+ch, 'success');
+          } else {
+            try { const err = await r.json(); showToast(err.error || 'Failed to clear', 'error'); } catch { showToast('Failed to clear', 'error'); }
+          }
+        } catch { showToast('Failed to clear', 'error'); }
+        finally { clearConfirm.disabled = false; clearConfirm.textContent = prev; }
+      });
+
+      // Remove audio modal logic
+      function openRemoveModal() {
+        const ch = (filterChannel && filterChannel.value !== 'all') ? filterChannel.value : '';
+        if (!ch) { showToast('Please select a channel first.', 'error'); return; }
+        if (removeChannelInput) removeChannelInput.value = ch;
+        if (removePasswordInput) removePasswordInput.value = '';
+        openModal(removeOverlay);
+        setTimeout(() => { try { removePasswordInput.focus(); } catch {} }, 0);
+      }
+      function closeRemoveModal() { closeModal(removeOverlay); }
+      if (removeBtn) removeBtn.addEventListener('click', openRemoveModal);
+      if (removeCancel) removeCancel.addEventListener('click', closeRemoveModal);
+      if (removeConfirm) removeConfirm.addEventListener('click', async () => {
+        const ch = removeChannelInput.value || '';
+        const pw = removePasswordInput ? removePasswordInput.value : '';
+        if (!ch) { showToast('Channel is required', 'error'); return; }
+        if (!pw) { showToast('Password is required', 'error'); return; }
+        removeConfirm.disabled = true; const prev = removeConfirm.textContent; removeConfirm.textContent = 'Removing…';
+        if (removeProgress) removeProgress.style.display = 'block';
+        if (removeCancel) removeCancel.disabled = true;
+        try {
+          const r = await fetch('/remove-audio', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ channel: ch, password: pw }) });
+          if (r.ok) {
+            const js = await r.json();
+            closeRemoveModal();
+            await loadPage();
+            // Show result modal with summary
+            if (removeResultBody) {
+              const recs = Number(js.removed_records||0);
+              const files = Number(js.removed_files||0);
+              removeResultBody.innerHTML = `Channel: <strong>${ch}</strong><br/>Removed records: <strong>${recs}</strong><br/>Removed files: <strong>${files}</strong>`;
+            }
+            if (removeResultOverlay) openModal(removeResultOverlay);
+          } else {
+            try { const err = await r.json(); showToast(err.error || 'Failed to remove', 'error'); } catch { showToast('Failed to remove', 'error'); }
+          }
+        } catch { showToast('Failed to remove', 'error'); }
+        finally {
+          if (removeProgress) removeProgress.style.display = 'none';
+          if (removeCancel) removeCancel.disabled = false;
+          removeConfirm.disabled = false; removeConfirm.textContent = prev; }
+      });
+      if (removeResultClose) removeResultClose.addEventListener('click', () => { if (removeResultOverlay) closeModal(removeResultOverlay); });
+
+      function showConfirm(message='Are you sure?', title='Confirm') {
+        return new Promise((resolve) => {
+          confirmText.textContent = message;
+          confirmTitle.textContent = title || 'Confirm';
+          openModal(confirmOverlay);
+          const onYes = () => { cleanup(); resolve(true); };
+          const onNo = () => { cleanup(); resolve(false); };
+          function cleanup() {
+            closeModal(confirmOverlay);
+            confirmYes.removeEventListener('click', onYes);
+            confirmNo.removeEventListener('click', onNo);
+          }
+          confirmYes.addEventListener('click', onYes);
+          confirmNo.addEventListener('click', onNo);
+        });
+      }
+      player.addEventListener('play', () => {
+        if(currentPlayingLink) {
+            const playBtn = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+            if(playBtn) playBtn.classList.replace('fa-play', 'fa-pause');
+            currentPlayingLink.closest('td').classList.add('playing');
+        }
+      });
+
+      player.addEventListener('pause', () => {
+        if(currentPlayingLink) {
+            const playBtn = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+            if(playBtn) playBtn.classList.replace('fa-pause', 'fa-play');
+            currentPlayingLink.closest('td').classList.remove('playing');
+        }
+      });
+
+      // Start job + overlay
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData(form);
+          // clear previous error
+          const err = document.getElementById('form_error');
+          if (err) { err.style.display = 'none'; err.textContent = ''; }
+        try {
+          const resp = await fetch('/process', { method: 'POST', body: formData });
+          if (!resp.ok) {
+            let msg = 'Failed to start';
+            try { const j = await resp.json(); if (j && j.error) msg = j.error; } catch {}
+            if (err) { err.textContent = msg; err.style.display = 'block'; }
+            return;
+          }
+          openModal(overlay);
+          loadingText.textContent = 'Queued…';
+          const data = await resp.json();
+          const jobId = data.job_id;
+          if (pollTimer) clearInterval(pollTimer);
+          pollTimer = setInterval(async () => {
+            const s = await fetch(`/status/${jobId}`);
+            if (!s.ok) return;
+            const js = await s.json();
+            if (js.status === 'downloading') loadingText.textContent = 'Downloading audio…';
+            if (js.status === 'splitting') loadingText.textContent = 'Detecting speech and splitting…';
+            if (js.status === 'done') {
+              loadingText.textContent = 'Done! Refreshing…';
+              clearInterval(pollTimer);
+              setTimeout(() => { window.location.reload(); }, 400);
+            }
+            if (js.status === 'error') {
+              loadingText.textContent = `Error: ${js.error || 'Unknown error'}`;
+              clearInterval(pollTimer);
+              setTimeout(() => { closeModal(overlay); }, 1200);
+            }
+          }, 1500);
+        } catch (err) {
+          loadingText.textContent = 'Failed to start job';
+          setTimeout(() => { closeModal(overlay); }, 1200);
+        }
+        });
+      }
+
+      // Server-side filters: fetch on change
+      let searchDebounce;
+      function buildParams() {
+        const params = new URLSearchParams();
+        params.set('offset', String(currentOffset));
+        params.set('limit', String(pageSize));
+        const v = (filterVerified && filterVerified.value) || 'all';
+        const ch = (filterChannel && filterChannel.value) || 'all';
+        const lk = (filterLock && filterLock.value) || 'all';
+        const q = (searchInput.value || '').trim();
+        const searchType = document.querySelector('input[name="search_type"]:checked').value;
+
+        if (v && v !== 'all') params.set('verify', v);
+        if (ch && ch !== 'all') params.set('channel', ch);
+        if (lk && lk !== 'all') params.set('lock', lk);
+        if (q) {
+          if (searchType === 'label') {
+            params.set('label', q);
+          } else {
+            params.set('q', q);
+          }
+        }
+        return params.toString();
+      }
+      if (filterVerified) filterVerified.addEventListener('change', () => { currentOffset = 0; loadPage(); });
+      if (filterChannel) filterChannel.addEventListener('change', () => { currentOffset = 0; loadPage(); });
+      if (filterLock) filterLock.addEventListener('change', () => { currentOffset = 0; loadPage(); });
+      searchInput.addEventListener('input', () => { clearTimeout(searchDebounce); searchDebounce = setTimeout(() => { currentOffset = 0; loadPage(); }, 250); });
+
+      // Search type radio button handlers
+      document.querySelectorAll('input[name="search_type"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          const searchType = document.querySelector('input[name="search_type"]:checked').value;
+          searchInput.placeholder = searchType === 'label' ? 'Type to search labels...' : 'Type to search files...';
+          currentOffset = 0;
+          loadPage();
+        });
+      });
+
+      // Pagination-like next 5 loader
+      let currentOffset = 0;
+      const pageSize = 5;
+      const nextBtn = document.getElementById('next_page_btn');
+      const backBtn = document.getElementById('back_page_btn');
+
+      function rowHtml(item) {
+        const transcript = item.transcript ? item.transcript : '';
+        const verified = item.verify ? 'true' : 'false';
+        const verifiedText = item.verify ? 'Verified' : 'Verify';
+        const verifyBtnClass = (item.verify ? 'btn btn-verify' : 'btn btn-slate') + ' verify-action';
+        const langOptions = ['', 'Khmer', 'English', 'Chinese', 'Vietnamese', 'Mixing-Language'];
+        const genderOptions = ['', 'Male', 'Female', 'Other'];
+        const langSel = langOptions.map(l => `<option value="${l}" ${item.language===l? 'selected':''}>${l||'None'}</option>`).join('');
+        const genderSel = genderOptions.map(g => `<option value="${g}" ${item.gender===g? 'selected':''}>${g||'None'}</option>`).join('');
+        // Escape transcript so custom tags like <voice a> are not parsed as DOM
+        const labelCell = `<td class=\"label-cell\" style=\"padding:10px; border-bottom:1px solid var(--border);\"><div class=\"label-textarea\" contenteditable=\"${item.locked ? 'false' : 'true'}\" data-filename=\"${item.filename}\">${escapeHtml(transcript)}</div></td>`;
+        return `
+          <tr class="file-row ${item.locked ? 'locked' : ''}" data-id="${item.id}" data-name="${(item.filename||'').toLowerCase()}" data-verified="${verified}" data-channel="${item.youtube_channel||''}" data-locked="${item.locked ? 'true' : 'false'}">
+            <td class="name" style="padding:10px; border-bottom:1px solid var(--border);">
+              <a class="file-link" href="${item.public_url}" target="_blank" data-filename="${item.filename}" style="color: var(--primary); text-decoration:none;">${item.filename}</a>
+              <span class="muted"> — </span>
+              <a class="time-link" href="${item.public_url}" download title="Download">${item.duration_human || '0:00'}</a>
+              <button class="btn btn-sm btn-slate btn-zoom-out" type="button" title="Shorter waveform">−</button>
+              <button class="btn btn-sm btn-slate btn-zoom-in" type="button" title="Taller waveform">+</button>
+              <button class="btn btn-sm btn-slate btn-play" title="Play/Pause" type="button"><i class="fa-solid fa-play"></i></button>
+              <button class="btn btn-sm btn-slate btn-reset" title="Restart" type="button"><i class="fa-solid fa-rotate-left"></i></button>
+              <button class="btn btn-sm btn-slate btn-lock" title="Lock/Unlock" type="button"><i class="fa-solid ${item.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
+              
+              <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+              <div class="wave-wrap" data-duration="${item.duration_seconds || 0}">
+                <div class="wave-skel"></div>
+                <canvas class="wave" data-scale="1" data-url="${item.public_url}"></canvas>
+                <div class="wave-dim left" style="width:0%;"></div>
+                <div class="wave-dim right" style="width:0%;"></div>
+                <div class="trim">
+                  <div class="sel" style="left:0%; right:0%;"></div>
+                  <div class="handle left" style="left:0%;"></div>
+                  <div class="handle right" style="right:0%;"></div>
+                </div>
+                <div class="wave-head" style="left:0%;"></div>
+                <div class="replace-badge">Replacing…</div>
+                <div class="hzoom-controls">
+                  <button class=\"btn btn-xs btn-slate btn-hz-out\" type=\"button\" title=\"Time zoom out\">−</button>
+                  <div class=\"hscroll\"><div class=\"hthumb\" style=\"left:0%; width:100%;\"></div></div>
+                  <button class=\"btn btn-xs btn-slate btn-hz-in\" type=\"button\" title=\"Time zoom in\">+</button>
+                </div>
+              </div>
+            </td>
+            ${labelCell}
+            <td style="padding:10px; border-bottom:1px solid var(--border);"><div class="meta"><select class="input lang-select" data-filename="${item.filename}" style="max-width:160px;" ${item.locked ? 'disabled' : ''}>${langSel}</select><select class="input gender-select" data-filename="${item.filename}" style="max-width:160px;" ${item.locked ? 'disabled' : ''}>${genderSel}</select></div></td>
+            <td style="padding:10px; border-bottom:1px solid var(--border);">${item.youtube_channel||''}</td>
+            <td style="padding:10px; border-bottom:1px solid var(--border);">
+              <div class="actions">
+                <button class=\"${verifyBtnClass}\" data-id=\"${item.id}\" data-filename=\"${item.filename}\" data-verified=\"${verified}\">${verifiedText}</button>
+                <button class=\"btn btn-slate btn-save\" data-id=\"${item.id}\" data-filename=\"${item.filename}\" title=\"Save transcript\">Save</button>
+                <button class=\"btn btn-amber btn-gen\" data-id=\"${item.id}\" data-filename=\"${item.filename}\" title=\"Generate transcript\">Gen</button>
+                <button class=\"btn btn-slate btn-split\" data-id=\"${item.id}\" data-filename=\"${item.filename}\" title=\"Clear spaces in label\">Clear [_]</button>
+                <button class=\"btn btn-cyan btn-trim\" data-id=\"${item.id}\" data-filename=\"${item.filename}\" title=\"Apply trim\">Trim</button>
+                <button class=\"btn btn-rose btn-delete\" data-id=\"${item.id}\" data-filename=\"${item.filename}\" title=\"Delete record\">Delete</button>
+              </div>
+            </td>
+          </tr>`;
+      }
+
+      function adjustTextarea(el) {
+        // No-op for contenteditable; CSS controls height
+      }
+
+      function adjustAllTextareas(scope=document) {
+        scope.querySelectorAll('.label-textarea').forEach(el => {
+          initEditor(el);
+          el.addEventListener('input', () => { normalizeTagsInArea(el); });
+          attachHistoryToTextarea(el);
+        });
+      }
+
+      // ----- Contenteditable helpers -----
+      function getEditorText(el) {
+        return (el && el.textContent) ? el.textContent : '';
+      }
+      function escapeHtml(s) {
+        return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+      function highlightTags(text) {
+        // 1) Escape any HTML to prevent injection
+        let html = escapeHtml(text);
+        // 2) First, mark voice tags themselves so they are visible
+        html = html.replace(/&lt;voice\s+a&gt;/gi, '<span class="tag-a">&lt;voice a&gt;</span>');
+        html = html.replace(/&lt;\/voice\s+a&gt;/gi, '<span class="tag-a">&lt;/voice a&gt;</span>');
+        html = html.replace(/&lt;voice\s+b&gt;/gi, '<span class="tag-b">&lt;voice b&gt;</span>');
+        html = html.replace(/&lt;\/voice\s+b&gt;/gi, '<span class="tag-b">&lt;/voice b&gt;</span>');
+        html = html.replace(/&lt;voice\s+c&gt;/gi, '<span class="tag-c">&lt;voice c&gt;</span>');
+        html = html.replace(/&lt;\/voice\s+c&gt;/gi, '<span class="tag-c">&lt;/voice c&gt;</span>');
+        // 3) Then, wrap the content between each matching pair to visually render segments
+        html = html.replace(/<span class="tag-a">&lt;voice\s+a&gt;<\/span>([\s\S]*?)<span class="tag-a">&lt;\/voice\s+a&gt;<\/span>/gi, (m, inner) => {
+          return `<span class="tag-a">&lt;voice a&gt;</span><span class="seg-a">${inner}</span><span class="tag-a">&lt;/voice a&gt;</span>`;
+        });
+        html = html.replace(/<span class="tag-b">&lt;voice\s+b&gt;<\/span>([\s\S]*?)<span class="tag-b">&lt;\/voice\s+b&gt;<\/span>/gi, (m, inner) => {
+          return `<span class="tag-b">&lt;voice b&gt;</span><span class="seg-b">${inner}</span><span class="tag-b">&lt;/voice b&gt;</span>`;
+        });
+        html = html.replace(/<span class="tag-c">&lt;voice\s+c&gt;<\/span>([\s\S]*?)<span class="tag-c">&lt;\/voice\s+c&gt;<\/span>/gi, (m, inner) => {
+          return `<span class="tag-c">&lt;voice c&gt;</span><span class="seg-c">${inner}</span><span class="tag-c">&lt;/voice c&gt;</span>`;
+        });
+        // 4) Highlight bracket annotations like [laugh], [sad], [cry]
+        html = html.replace(/\[[^\]]+\]/g, (m) => `<span class=\"tag-bracket\">${m}</span>`);
+        return html;
+      }
+      function getSelectionOffsets(el) {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return null;
+        const range = sel.getRangeAt(0);
+        if (!el.contains(range.startContainer) || !el.contains(range.endContainer)) return null;
+        const pre = document.createRange();
+        pre.selectNodeContents(el);
+        pre.setEnd(range.startContainer, range.startOffset);
+        const start = pre.toString().length;
+        const pre2 = document.createRange();
+        pre2.selectNodeContents(el);
+        pre2.setEnd(range.endContainer, range.endOffset);
+        const end = pre2.toString().length;
+        return { start, end };
+      }
+      function setSelectionOffsets(el, start, end) {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+        let cur = 0;
+        let startNode=null, startOff=0, endNode=null, endOff=0;
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          const len = node.nodeValue.length;
+          if (startNode===null && cur + len >= start) { startNode = node; startOff = start - cur; }
+          if (cur + len >= end) { endNode = node; endOff = end - cur; break; }
+          cur += len;
+        }
+        if (!startNode) { startNode = el; startOff = el.childNodes.length; }
+        if (!endNode) { endNode = startNode; endOff = startOff; }
+        const sel = window.getSelection();
+        const r = document.createRange();
+        r.setStart(startNode, Math.max(0, Math.min(startOff, startNode.nodeValue ? startNode.nodeValue.length : startNode.childNodes.length)));
+        r.setEnd(endNode, Math.max(0, Math.min(endOff, endNode.nodeValue ? endNode.nodeValue.length : endNode.childNodes.length)));
+        sel.removeAllRanges();
+        sel.addRange(r);
+      }
+      function setEditorText(el, text, keepSelection=true) {
+        let selOff = null;
+        if (keepSelection) selOff = getSelectionOffsets(el);
+        el.innerHTML = highlightTags(text);
+        if (selOff) setSelectionOffsets(el, selOff.start, selOff.end);
+      }
+      function initEditor(el) {
+        if (!el || el._inited) return;
+        el._inited = true;
+        setEditorText(el, getEditorText(el), false);
+      }
+      // When user edits transcript, mark as unverified (requires re-verify to save)
+      tbody.addEventListener('input', async (e) => {
+        const area = e.target.closest('.label-textarea');
+        if (!area) return;
+        const row = area.closest('tr');
+        // Find verify button regardless of its current class
+        const verifyBtn = row ? row.querySelector('button[data-filename][data-verified]') : null;
+        if (!verifyBtn) return;
+        const wasVerified = verifyBtn.getAttribute('data-verified') === 'true';
+        if (wasVerified) {
+          const filename = area.dataset.filename;
+          const id = verifyBtn.dataset.id || (row ? row.getAttribute('data-id') : null);
+          verifyBtn.textContent = 'Verify';
+          verifyBtn.setAttribute('data-verified','false');
+          // Switch to slate style when unverified
+          verifyBtn.classList.remove('btn-verify');
+          if (!verifyBtn.classList.contains('btn')) verifyBtn.classList.add('btn');
+          if (!verifyBtn.classList.contains('btn-slate')) verifyBtn.classList.add('btn-slate');
+          try {
+            const payload = id ? { id: Number(id), verified: false } : { filename, verified: false };
+            await fetch('/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          } catch {}
+        }
+      });
+      // Adjust any server-rendered textareas on load
+      adjustAllTextareas();
+      attachTrimControls();
+      attachWaveforms();
+
+      // --- Mini Voice Toolbar for wrapping selections ---
+      let activeTextarea = null;
+      let voiceToolbar = null;
+      let cleanToolbar = null;
+
+      function ensureVoiceToolbar(container) {
+        // Create if needed, or move into the provided container if different
+        if (voiceToolbar && voiceToolbar.parentElement && voiceToolbar.parentElement.isConnected) {
+          if (container && voiceToolbar.parentElement !== container) {
+            container.appendChild(voiceToolbar);
+          }
+          return voiceToolbar;
+        }
+        voiceToolbar = document.createElement('div');
+        voiceToolbar.className = 'voice-toolbar';
+        voiceToolbar.innerHTML = `
+          <button type="button" class="btn btn-emerald" data-voice="a">Voice A</button>
+          <button type="button" class="btn btn-amber" data-voice="b">Voice B</button>
+          <button type="button" class="btn btn-violet" data-voice="c">Voice C</button>
+        `;
+        // Click handler for wrapping
+        voiceToolbar.addEventListener('click', (e) => {
+          const b = e.target.closest('button[data-voice]');
+          if (b && activeTextarea) {
+            const v = b.getAttribute('data-voice');
+            wrapSelectionWithVoice(activeTextarea, v);
+            hideVoiceToolbar();
+            return;
+          }
+        });
+        // Prevent clicks from blurring the textarea immediately
+        voiceToolbar.addEventListener('mousedown', (e) => { e.preventDefault(); });
+        (container || document.body).appendChild(voiceToolbar);
+        return voiceToolbar;
+      }
+
+      function showVoiceToolbarFor(area) {
+        activeTextarea = area;
+        // Only show when there is a non-empty selection inside the editor
+        const sel = getSelectionOffsets(area);
+        if (!sel || sel.end <= sel.start) { hideVoiceToolbar(); return; }
+        // Place the toolbar inside the nearest label-cell (bottom-right)
+        const cell = area.closest('.label-cell');
+        if (!cell) { hideVoiceToolbar(); return; }
+        const tb = ensureVoiceToolbar(cell);
+        tb.style.display = 'flex';
+      }
+
+      function hideVoiceToolbar() {
+        if (voiceToolbar) voiceToolbar.style.display = 'none';
+      }
+
+      // --- Clear Spaces toolbar (shown on focus) ---
+      function ensureCleanToolbar(container) {
+        if (cleanToolbar && cleanToolbar.parentElement && cleanToolbar.parentElement.isConnected) {
+          if (container && cleanToolbar.parentElement !== container) {
+            container.appendChild(cleanToolbar);
+          }
+          return cleanToolbar;
+        }
+        cleanToolbar = document.createElement('div');
+        cleanToolbar.className = 'clean-toolbar';
+        cleanToolbar.innerHTML = ``;
+        cleanToolbar.addEventListener('mousedown', (e) => { e.preventDefault(); });
+        (container || document.body).appendChild(cleanToolbar);
+        return cleanToolbar;
+      }
+
+      function showCleanToolbarFor(area) {
+        activeTextarea = area;
+        const cell = area.closest('.label-cell');
+        if (!cell) { hideCleanToolbar(); return; }
+        // Intentionally hidden (button removed)
+        hideCleanToolbar();
+      }
+
+      function hideCleanToolbar() {
+        if (cleanToolbar) cleanToolbar.style.display = 'none';
+      }
+
+      function isUnicodeWhitespace(ch) {
+        // Includes ASCII whitespace, NBSP, BOM, ZWJ/ZWNJ/ZWSP, and most Space_Separator chars
+        return /[\s\u00A0\u1680\u180E\u2000-\u200A\u200B\u200C\u200D\u2028\u2029\u202F\u205F\u3000\uFEFF]/.test(ch);
+      }
+
+      function clearSpacesInArea(area) {
+        if (!area) return;
+        // Push undo snapshot before change
+        try { pushHistorySnapshot(area); } catch {}
+        const val = getEditorText(area) || '';
+        let out = '';
+        let inTag = false;
+        for (let i = 0; i < val.length; i++) {
+          const ch = val[i];
+          if (ch === '<') { inTag = true; out += ch; continue; }
+          if (ch === '>') { inTag = false; out += ch; continue; }
+          if (inTag) { out += ch; continue; }
+          if (isUnicodeWhitespace(ch)) { continue; }
+          out += ch;
+        }
+        // Apply and reset caret to a sensible position
+        setEditorText(area, out, false);
+        const pos = Math.min(out.length, (getSelectionOffsets(area)?.start || 0));
+        try { setSelectionOffsets(area, pos, pos); } catch {}
+        area.dispatchEvent(new Event('input', { bubbles: true }));
+        showToast('Spaces cleared', 'success');
+      }
+
+      function wrapSelectionWithVoice(area, which) {
+        // record undo state before programmatic change
+        pushHistorySnapshot(area);
+        const open = `\u003cvoice ${which}\u003e`;
+        const close = `\u003c/voice ${which}\u003e`;
+        const val = getEditorText(area);
+        const sel = getSelectionOffsets(area) || { start: 0, end: 0 };
+        if (sel.end <= sel.start) return;
+        const selected = val.slice(sel.start, sel.end);
+        const before = val.slice(0, sel.start);
+        const after = val.slice(sel.end);
+        const insert = `${open} ${selected} ${close}`;
+        const out = before + insert + after;
+        setEditorText(area, out, false);
+        const newCaret = (before + insert).length;
+        setSelectionOffsets(area, newCaret, newCaret);
+        area.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      // (No clear button; normalization is handled automatically when editing)
+
+      // --- Simple per-textarea Undo/Redo history ---
+      function attachHistoryToTextarea(area) {
+        if (!area || area._hasHistory) return;
+        area._hasHistory = true;
+        area._history = { past: [], future: [], limit: 200 };
+        area._lastSnapshotValue = getEditorText(area);
+
+        // Capture state BEFORE user edits for accurate undo
+        area.addEventListener('beforeinput', () => {
+          pushHistorySnapshot(area);
+          // User edit invalidates redo stack
+          area._history.future = [];
+        });
+        // Keep last known value up to date and re-highlight
+        area.addEventListener('input', () => { area._lastSnapshotValue = getEditorText(area); setEditorText(area, getEditorText(area)); });
+
+        // Keyboard shortcuts for undo/redo
+        area.addEventListener('keydown', (e) => {
+          const isMac = navigator.platform.toUpperCase().includes('MAC');
+          const ctrl = isMac ? e.metaKey : e.ctrlKey;
+          if (!ctrl) return;
+          const k = e.key.toLowerCase();
+          if (k === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            undoTextarea(area);
+          } else if ((k === 'z' && e.shiftKey) || k === 'y') {
+            e.preventDefault();
+            redoTextarea(area);
+          }
+        });
+      }
+
+      function pushHistorySnapshot(area) {
+        if (!area || !area._history) return;
+        const sel = getSelectionOffsets(area) || { start: 0, end: 0 };
+        const snap = { value: getEditorText(area), s: sel.start, e: sel.end };
+        const past = area._history.past;
+        // Avoid pushing identical consecutive states
+        const last = past.length ? past[past.length - 1] : null;
+        if (!last || last.value !== snap.value || last.s !== snap.s || last.e !== snap.e) {
+          past.push(snap);
+          const lim = area._history.limit || 200;
+          if (past.length > lim) past.shift();
+        }
+      }
+
+      function undoTextarea(area) {
+        const H = area && area._history; if (!H) return;
+        if (H.past.length === 0) return;
+        // Current state goes to future
+        const curSel = getSelectionOffsets(area) || { start: 0, end: 0 };
+        H.future.push({ value: getEditorText(area), s: curSel.start, e: curSel.end });
+        // Restore last past state
+        const prev = H.past.pop();
+        setEditorText(area, prev.value, false);
+        setSelectionOffsets(area, prev.s, prev.e);
+        area.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      function redoTextarea(area) {
+        const H = area && area._history; if (!H) return;
+        if (H.future.length === 0) return;
+        // Current state becomes a past state
+        const curSel = getSelectionOffsets(area) || { start: 0, end: 0 };
+        H.past.push({ value: getEditorText(area), s: curSel.start, e: curSel.end });
+        const next = H.future.pop();
+        setEditorText(area, next.value, false);
+        setSelectionOffsets(area, next.s, next.e);
+        area.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      // --- Tag normalization: remove unmatched pairs automatically ---
+      function normalizeTagsInArea(area) {
+        if (!area) return;
+        const before = getEditorText(area) || '';
+        const after = normalizeVoiceTags(before);
+        if (after !== before) {
+          const sel = getSelectionOffsets(area) || { start: 0, end: 0 };
+          setEditorText(area, after, false);
+          const pos = Math.min(sel.start, after.length);
+          setSelectionOffsets(area, pos, pos);
+        }
+      }
+
+      function normalizeVoiceTags(text) {
+        function balance(t, label) {
+          const open = `<voice ${label}>`;
+          const close = `</voice ${label}>`;
+          const tokens = [];
+          let i = 0;
+          while (i < t.length) {
+            const oi = t.indexOf(open, i);
+            const ci = t.indexOf(close, i);
+            if (oi === -1 && ci === -1) { tokens.push({ type: 'text', s: i, e: t.length }); break; }
+            const ni = [oi === -1 ? Infinity : oi, ci === -1 ? Infinity : ci];
+            const next = Math.min(...ni);
+            if (next > i) tokens.push({ type: 'text', s: i, e: next });
+            if (next === oi) { tokens.push({ type: 'open', s: oi, e: oi + open.length }); i = oi + open.length; }
+            else { tokens.push({ type: 'close', s: ci, e: ci + close.length }); i = ci + close.length; }
+          }
+          const stack = [];
+          const keep = new Array(tokens.length).fill(false);
+          for (let idx = 0; idx < tokens.length; idx++) {
+            const tok = tokens[idx];
+            if (tok.type === 'open') { stack.push(idx); }
+            else if (tok.type === 'close') {
+              if (stack.length) { const oi = stack.pop(); keep[oi] = true; keep[idx] = true; }
+              else { /* unmatched close: drop */ }
+            } else { keep[idx] = true; }
+          }
+          // Rebuild string: drop unmatched open/close
+          let out = '';
+          for (let idx = 0; idx < tokens.length; idx++) {
+            if (!keep[idx]) continue;
+            const tok = tokens[idx];
+            out += t.slice(tok.s, tok.e);
+          }
+          return out;
+        }
+        return ['a','b','c'].reduce((acc, v) => balance(acc, v), text);
+      }
+      // Event delegation for selection changes within textareas
+      function handleSelectionChange(e) {
+        const area = e.target && e.target.classList && e.target.classList.contains('label-textarea') ? e.target : null;
+        if (!area) return;
+        // Defer slightly to capture updated selection after mouseup/keyup
+        setTimeout(() => {
+          if (document.activeElement !== area) { hideVoiceToolbar(); return; }
+          const sel = getSelectionOffsets(area);
+          if (sel && sel.end > sel.start) showVoiceToolbarFor(area); else hideVoiceToolbar();
+        }, 0);
+      }
+
+      tbody.addEventListener('mouseup', handleSelectionChange);
+      tbody.addEventListener('keyup', (e)=>{
+        // React to Shift+Arrows and selection changes
+        if (e.key && (e.key.startsWith('Arrow') || e.key === 'Shift')) handleSelectionChange(e);
+        else handleSelectionChange(e);
+      });
+      tbody.addEventListener('focusin', (e)=>{
+        if (e.target && e.target.classList && e.target.classList.contains('label-textarea')) {
+          activeTextarea = e.target;
+        }
+      });
+      tbody.addEventListener('focusout', (e)=>{
+        if (e.target && e.target.classList && e.target.classList.contains('label-textarea')) {
+          setTimeout(()=>{
+            if (document.activeElement !== e.target) {
+              hideVoiceToolbar();
+              hideCleanToolbar();
+            }
+          }, 0);
+        }
+      });
+      document.addEventListener('scroll', hideVoiceToolbar, true);
+
+      // Click lock/unlock
+      tbody.addEventListener('click', async (e) => {
+        const lockBtn = e.target.closest('.btn-lock');
+        if (!lockBtn) return;
+        const row = lockBtn.closest('tr.file-row');
+        const id = parseInt(row?.getAttribute('data-id')||'0',10);
+        if (!id) return;
+        const currentlyLocked = row.getAttribute('data-locked') === 'true';
+        // Open modal for both lock and unlock (requires password)
+        pendingUnlockRow = row;
+        pendingUnlockId = id;
+        pendingDesiredLocked = !currentlyLocked;
+        const name = row.querySelector('a.file-link')?.textContent || `#${id}`;
+        if (unlockName) unlockName.textContent = name;
+        if (unlockPasswordInput) unlockPasswordInput.value = '';
+        if (lockModalTitle) lockModalTitle.textContent = pendingDesiredLocked ? 'Lock Record' : 'Unlock Record';
+        if (unlockConfirm) unlockConfirm.textContent = pendingDesiredLocked ? 'Lock' : 'Unlock';
+        if (unlockOverlay) openModal(unlockOverlay);
+        if (unlockPasswordInput) setTimeout(()=>unlockPasswordInput.focus(), 50);
+        return;
+      });
+
+      // Unlock modal controls
+      if (unlockCancel) unlockCancel.addEventListener('click', () => { if (unlockOverlay) closeModal(unlockOverlay); pendingUnlockRow = null; pendingUnlockId = null; pendingDesiredLocked = null; });
+      if (unlockConfirm) unlockConfirm.addEventListener('click', async () => {
+        if (!pendingUnlockRow || !pendingUnlockId || pendingDesiredLocked == null) { if (unlockOverlay) closeModal(unlockOverlay); return; }
+        const password = unlockPasswordInput ? unlockPasswordInput.value : '';
+        try {
+          const r = await fetch('/lock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: pendingUnlockId, locked: pendingDesiredLocked, password }) });
+          const js = await r.json();
+          if (!r.ok) { showToast(js && js.error ? js.error : 'Invalid password', 'error'); return; }
+          applyLockState(pendingUnlockRow, !!js.locked);
+          showToast(js.locked ? 'Locked' : 'Unlocked', 'success');
+          if (unlockOverlay) closeModal(unlockOverlay);
+          pendingUnlockRow = null; pendingUnlockId = null; pendingDesiredLocked = null;
+        } catch {
+          showToast('Error toggling lock', 'error');
+        }
+      });
+      if (unlockPasswordInput) {
+        unlockPasswordInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); unlockConfirm?.click(); }
+          if (e.key === 'Escape') { e.preventDefault(); unlockCancel?.click(); }
+        });
+      }
+
+      function updateStatsFromResponse(data) {
+        const totals = (data && data.totals) || {};
+        const statVerified = document.getElementById('stat_verified');
+        const statTotal = document.getElementById('stat_total');
+        const statChannel = document.getElementById('stat_channel');
+        const footerTotal = document.getElementById('footer_total');
+        const statLeft = document.getElementById('stat_left');
+        // Pull values with robust fallbacks
+        const totalAll = (typeof totals.total_all === 'number') ? totals.total_all : (parseInt(statTotal?.textContent||'0',10)||0);
+        const totalChannel = (typeof totals.total_channel === 'number') ? totals.total_channel : (parseInt(statChannel?.textContent||'0',10)||0);
+        const verifiedChannel = (typeof totals.verified_channel === 'number') ? totals.verified_channel : (
+          (typeof totals.verified_all === 'number') ? totals.verified_all : (parseInt(statVerified?.textContent||'0',10)||0)
+        );
+        // Update DOM
+        if (statTotal) statTotal.textContent = String(totalAll);
+        if (statChannel) statChannel.textContent = String(totalChannel);
+        if (statVerified) statVerified.textContent = String(verifiedChannel);
+        const left = Math.max(0, (totalChannel||0) - (verifiedChannel||0));
+        if (statLeft) statLeft.textContent = String(left);
+        if (footerTotal) footerTotal.textContent = String(totalChannel);
+      }
+
+      // Ensure "Remaining" is correct even before the first fetch
+      // This uses the server-rendered numbers (Channel and Verified)
+      try { updateStatsFromResponse({}); } catch {}
+
+      async function loadPage() {
+        // stop any playing audio
+        try { player.pause(); } catch {}
+        // Proactively update UI and clear handlers to avoid stale states
+        try {
+          if (currentPlayingLink) {
+            const icon = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+            if (icon) icon.classList.replace('fa-pause', 'fa-play');
+            currentPlayingLink.closest('td').classList.remove('playing');
+          }
+        } catch {}
+        userWantsPlay = false;
+        if (onLoadedMetadata) { try { player.removeEventListener('loadedmetadata', onLoadedMetadata); } catch {} onLoadedMetadata = null; }
+        if (onTimeUpdate) { try { player.removeEventListener('timeupdate', onTimeUpdate); } catch {} onTimeUpdate = null; }
+        segmentEndSec = null;
+        try { player.currentTime = 0; } catch {}
+        try { player.removeAttribute('src'); } catch {}
+        try { player.srcObject = null; } catch {}
+        try { player.load(); } catch {}
+        currentPlayingLink = null;
+        const res = await fetch(`/list?${buildParams()}`);
+        if (!res.ok) return false;
+        const data = await res.json();
+        // Always update stats and channels from response
+        updateStatsFromResponse(data);
+        const items = Array.isArray(data.items) ? data.items : [];
+        if (items.length === 0) return false;
+        tbody.innerHTML = items.map(rowHtml).join('');
+        // Apply lock state to each row
+        ;[...tbody.querySelectorAll('tr.file-row')].forEach(tr => {
+          const locked = (tr.getAttribute('data-locked') === 'true');
+          applyLockState(tr, locked);
+        });
+        // adjust textarea sizes, highlights and trim bars
+        adjustAllTextareas(tbody);
+        attachTrimControls(tbody);
+        attachWaveforms(tbody);
+        hideVoiceToolbar();
+        // rebuild channels dropdown
+        if (filterChannel) {
+          const cur = filterChannel.value;
+          const opts = ['<option value="all">All</option>'].concat((data.channels||[]).map(ch=>`<option value="${ch}">${ch}</option>`));
+          filterChannel.innerHTML = opts.join('');
+          // restore selection if present, else All
+          if ([...filterChannel.options].some(o => o.value === cur)) filterChannel.value = cur; else filterChannel.value = 'all';
+        }
+        return true;
+      }
+
+      nextBtn.addEventListener('click', async () => {
+        currentOffset += pageSize;
+        const ok = await loadPage();
+        if (!ok) {
+          // wrap to first page if no more
+          currentOffset = 0;
+          await loadPage();
+        }
+      });
+
+      backBtn.addEventListener('click', async () => {
+        currentOffset = Math.max(0, currentOffset - pageSize);
+        await loadPage();
+      });
+
+      // Initial stats sync (keep page content but update counts)
+      // Do not early-return even if items are empty; we just want totals
+      (async () => { try { await loadPage(); } catch {} })();
+
+      // Toggle verify
+      const DEFAULT_PROMPT = 'Transcribe the audio as plain text in the original language without timestamps or speaker labels. Return only the transcription text.';
+      let segmentEndSec = null;
+      let onTimeUpdate = null;
+      let onLoadedMetadata = null;
+      let userWantsPlay = false;
+
+      function drawBins(canvas) {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0,0,w,h);
+        const bins = canvas._bins;
+        if (!bins) return;
+        const { mins, maxs, peak } = bins;
+        const total = mins.length;
+        // Horizontal zoom params
+        let hzoom = parseFloat(canvas.dataset.hzoom || '1'); if (!isFinite(hzoom) || hzoom < 1) hzoom = 1;
+        let hoff = parseFloat(canvas.dataset.hoff || '0'); if (!isFinite(hoff) || hoff < 0) hoff = 0;
+        const visibleFrac = 1 / hzoom;
+        const maxOff = Math.max(0, 1 - visibleFrac);
+        hoff = Math.max(0, Math.min(maxOff, hoff));
+        // Compute start/end bins for viewport
+        const viewBins = Math.max(10, Math.floor(total * visibleFrac));
+        const start = Math.max(0, Math.min(total - viewBins, Math.floor(hoff * total)));
+        const amp = h / 2;
+        const scale = Math.max(0.25, Math.min(parseFloat(canvas.dataset.scale || '1') || 1, peak > 0 ? 1/peak : 8));
+        canvas.dataset.scale = String(scale);
+        // Draw thin strokes across the full canvas width
+        ctx.strokeStyle = '#0ea5e9';
+        ctx.globalAlpha = 0.95;
+        ctx.lineWidth = 0.7;
+        ctx.translate(0, amp);
+        const N = Math.max(1, Math.floor(w));
+        for (let i = 0; i < N; i++) {
+          const bi = start + Math.floor(i * (viewBins / N));
+          const min = (mins[bi] || 0) * scale;
+          const max = (maxs[bi] || 0) * scale;
+          const y1 = Math.max(-amp, min * amp);
+          const y2 = Math.min(amp, max * amp);
+          ctx.beginPath();
+          // draw centered on half-pixel for crispness
+          ctx.moveTo(i + 0.5, y1);
+          ctx.lineTo(i + 0.5, Math.max(y1 + 0.5, y2));
+          ctx.stroke();
+        }
+        ctx.setTransform(1,0,0,1,0,0);
+      }
+
+      function getViewport(canvas) {
+        let hzoom = parseFloat(canvas.dataset.hzoom || '1'); if (!isFinite(hzoom) || hzoom < 1) hzoom = 1;
+        let hoff = parseFloat(canvas.dataset.hoff || '0'); if (!isFinite(hoff) || hoff < 0) hoff = 0;
+        const visibleFrac = 1 / hzoom;
+        const maxOff = Math.max(0, 1 - visibleFrac);
+        hoff = Math.max(0, Math.min(maxOff, hoff));
+        return { hzoom, hoff, visibleFrac };
+      }
+
+      function updateHScroll(wrap) {
+        const cv = wrap.querySelector('canvas.wave'); if (!cv) return;
+        const { hzoom, hoff, visibleFrac } = getViewport(cv);
+        const thumb = wrap.querySelector('.hscroll .hthumb');
+        if (thumb) {
+          const w = Math.max(5, Math.min(100, visibleFrac * 100));
+          const l = Math.max(0, Math.min(100 - w, hoff * 100));
+          thumb.style.width = w + '%';
+          thumb.style.left = l + '%';
+        }
+      }
+
+      function updateZoomButtonsState(row) {
+        if (!row) return;
+        const wrap = row.querySelector('.wave-wrap');
+        if (!wrap) return;
+        const cv = wrap.querySelector('canvas.wave');
+        const outBtn = row.querySelector('.btn-zoom-out');
+        const inBtn = row.querySelector('.btn-zoom-in');
+        if (!cv || !cv._bins) return;
+        const peak = cv._bins.peak || 1;
+        const maxScale = peak > 0 ? (1/peak) : 8;
+        const scale = parseFloat(cv.dataset.scale || '1') || 1;
+        if (outBtn) outBtn.disabled = scale <= 0.25 + 1e-6;
+        if (inBtn) inBtn.disabled = scale >= maxScale - 1e-6;
+      }
+
+      function attachWaveforms(scope=document) {
+        const canvases = scope.querySelectorAll('canvas.wave[data-url]');
+        canvases.forEach(async (cv) => {
+          if (cv.dataset.rendered === '1') return;
+          const url = cv.getAttribute('data-url');
+          if (!url) return;
+          try {
+            const resp = await fetch(url, { cache: 'no-store' });
+            const buf = await resp.arrayBuffer();
+            // Build bins (min/max per column) and compute peak, then draw with scale
+            if (isWav(buf)) {
+              const bins = buildBinsFromWav(cv, buf);
+              cv._bins = bins;
+              if (bins && typeof bins.durationSec === 'number') cv._durationSec = bins.durationSec;
+              drawBins(cv);
+            } else {
+              const ac = new (window.AudioContext || window.webkitAudioContext)();
+              const audio = await ac.decodeAudioData(buf);
+              const bins = buildBinsFromAudioBuffer(cv, audio);
+              cv._bins = bins;
+              if (bins && typeof bins.durationSec === 'number') cv._durationSec = bins.durationSec;
+              drawBins(cv);
+            }
+            cv.dataset.rendered = '1';
+            const skel = cv.parentElement.querySelector('.wave-skel');
+            if (skel) skel.style.display = 'none';
+            updateZoomButtonsState(cv.closest('tr'));
+            // Initialize viewport state
+            if (!cv.dataset.hzoom) cv.dataset.hzoom = '1';
+            if (!cv.dataset.hoff) cv.dataset.hoff = '0';
+            updateHScroll(cv.parentElement);
+          } catch {}
+        });
+      }
+
+      
+
+      function buildBinsFromAudioBuffer(canvas, audioBuffer) {
+        const w = canvas.clientWidth;
+        const N = Math.max(200, Math.floor(w));
+        const data = audioBuffer.getChannelData(0);
+        const step = Math.floor(data.length / N) || 1;
+        const mins = new Array(N);
+        const maxs = new Array(N);
+        let peak = 0;
+        for (let i = 0; i < N; i++) {
+          let start = i * step, end = Math.min(start + step, data.length);
+          let min = 1.0, max = -1.0;
+          for (let j = start; j < end; j++) { const v = data[j]; if (v < min) min = v; if (v > max) max = v; }
+          mins[i] = min; maxs[i] = max;
+          const p = Math.max(Math.abs(min), Math.abs(max));
+          if (p > peak) peak = p;
+        }
+        return { mins, maxs, peak, durationSec: audioBuffer.duration };
+      }
+
+      function isWav(buffer) {
+        const dv = new DataView(buffer);
+        if (dv.byteLength < 12) return false;
+        // 'RIFF'....'WAVE'
+        return dv.getUint32(0, false) === 0x52494646 && dv.getUint32(8, false) === 0x57415645;
+      }
+
+      function buildBinsFromWav(canvas, buffer) {
+        const w = canvas.clientWidth;
+        const dv = new DataView(buffer);
+        // Parse fmt chunk to get bitsPerSample, numChannels
+        let offset = 12; // skip RIFF header
+        let bitsPerSample = 16;
+        let numChannels = 1;
+        let sampleRate = 0;
+        let dataOffset = -1, dataSize = 0;
+        while (offset + 8 <= dv.byteLength) {
+          const id = dv.getUint32(offset, false); // chunk id
+          const size = dv.getUint32(offset + 4, true);
+          if (id === 0x666d7420) { // 'fmt '
+            const audioFormat = dv.getUint16(offset + 8, true);
+            numChannels = dv.getUint16(offset + 10, true);
+            sampleRate = dv.getUint32(offset + 12, true);
+            bitsPerSample = dv.getUint16(offset + 22, true);
+            // if extended fmt, skip accordingly
+          } else if (id === 0x64617461) { // 'data'
+            dataOffset = offset + 8;
+            dataSize = size;
+            break;
+          }
+          offset += 8 + size + (size % 2);
+        }
+        if (dataOffset < 0) return;
+        const bytesPerSample = bitsPerSample / 8;
+        const sampleCount = Math.floor(dataSize / bytesPerSample / numChannels);
+        const N = Math.max(200, Math.floor(w));
+        const step = Math.max(1, Math.floor(sampleCount / N));
+        const mins = new Array(N);
+        const maxs = new Array(N);
+        let peak = 0;
+        for (let i = 0; i < N; i++) {
+          const startSample = i * step;
+          const endSample = Math.min(startSample + step, sampleCount);
+          let min = 1.0, max = -1.0;
+          for (let s = startSample; s < endSample; s += Math.max(1, Math.floor(step / 10))) { // sub-sample within bucket
+            const frameOffset = dataOffset + (s * numChannels * bytesPerSample);
+            // take channel 0
+            let sample = 0;
+            if (bitsPerSample === 16) {
+              sample = dv.getInt16(frameOffset, true) / 32768;
+            } else if (bitsPerSample === 8) {
+              sample = (dv.getUint8(frameOffset) - 128) / 128;
+            } else if (bitsPerSample === 32) {
+              // assume float32
+              sample = dv.getFloat32(frameOffset, true);
+            }
+            if (sample < min) min = sample;
+            if (sample > max) max = sample;
+          }
+          mins[i] = min; maxs[i] = max;
+          const p = Math.max(Math.abs(min), Math.abs(max));
+          if (p > peak) peak = p;
+        }
+        const durationSec = sampleRate ? (sampleCount / sampleRate) : null;
+        return { mins, maxs, peak, durationSec };
+      }
+
+      function attachTrimControls(scope=document) {
+        const wraps = scope.querySelectorAll('.wave-wrap');
+        wraps.forEach(wrap => {
+          const trim = wrap.querySelector('.trim');
+          const leftH = wrap.querySelector('.handle.left');
+          const rightH = wrap.querySelector('.handle.right');
+          const sel = wrap.querySelector('.sel');
+          const duration = parseInt(wrap.getAttribute('data-duration')||'0',10);
+          if (!trim || !leftH || !rightH || !sel || !duration) return;
+          // state as fractions [0,1]
+          let leftFrac = 0;
+          let rightFrac = 1;
+          let dragging = null; // 'left'|'right'|null
+          function updateUI() {
+            leftH.style.left = `${leftFrac*100}%`;
+            rightH.style.right = `${(1-rightFrac)*100}%`;
+            sel.style.left = `${leftFrac*100}%`;
+            sel.style.right = `${(1-rightFrac)*100}%`;
+            // update waveform dim overlays
+            const dimL = wrap.querySelector('.wave-dim.left');
+            const dimR = wrap.querySelector('.wave-dim.right');
+            if (dimL) dimL.style.width = `${leftFrac*100}%`;
+            if (dimR) dimR.style.width = `${(1-rightFrac)*100}%`;
+          }
+          updateUI();
+          function pxToFrac(clientX) {
+            const rect = trim.getBoundingClientRect();
+            const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+            return rect.width ? (x / rect.width) : 0;
+          }
+          function onMouseMove(e) {
+            if (!dragging) return;
+            const f = pxToFrac(e.clientX);
+            const minGap = 0.001;
+            if (dragging === 'left') {
+              leftFrac = Math.min(Math.max(0, f), rightFrac - minGap);
+            } else {
+              rightFrac = Math.max(Math.min(1, f), leftFrac + minGap);
+            }
+            updateUI();
+          }
+          function onMouseUp() {
+            dragging = null;
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+          }
+          leftH.addEventListener('mousedown', (e) => { dragging = 'left'; window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); e.preventDefault(); });
+          rightH.addEventListener('mousedown', (e) => { dragging = 'right'; window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); e.preventDefault(); });
+          // no direct binding here; handled via delegated click on .btn-trim
+        });
+      }
+
+      tbody.addEventListener('click', async (e) => {
+        // Move playhead on waveform click
+        const waveCv = e.target.closest('canvas.wave');
+        if (waveCv) {
+          const wrap = waveCv.closest('.wave-wrap');
+          const row = waveCv.closest('tr');
+          if (wrap && row) {
+            const rect = waveCv.getBoundingClientRect();
+            const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+            const vp = getViewport(waveCv);
+            let vfrac = rect.width ? (x / rect.width) : 0;
+            let gfrac = vp.hoff + vfrac * vp.visibleFrac;
+            gfrac = Math.max(0, Math.min(1, gfrac));
+            wrap.dataset.playhead = String(gfrac);
+            const head = wrap.querySelector('.wave-head');
+            if (head) {
+              head.style.opacity = '1';
+              const rel = vp.visibleFrac > 0 ? (gfrac - vp.hoff) / vp.visibleFrac : 0;
+              head.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+            }
+            // If this row is currently playing, also seek the player to this position
+            if (currentPlayingLink && currentPlayingLink.closest('tr') === row) {
+              const cv = wrap.querySelector('canvas.wave');
+              const duration = (cv && cv._durationSec) ? cv._durationSec : (parseInt(wrap.getAttribute('data-duration')||'0',10) || 0);
+              if (duration) {
+                const sec = Math.max(0, Math.min(duration, gfrac * duration));
+                try { player.currentTime = sec; } catch {}
+              }
+            }
+          }
+          return;
+        }
+
+        // Waveform vertical scale controls
+        const zoomOut = e.target.closest('.btn-zoom-out');
+        const zoomIn = e.target.closest('.btn-zoom-in');
+        if (zoomOut || zoomIn) {
+          const row = e.target.closest('tr');
+          const wrap = row ? row.querySelector('.wave-wrap') : null;
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          if (cv && cv._bins) {
+            const peak = cv._bins.peak || 1;
+            const maxScale = peak > 0 ? (1/peak) : 8;
+            let scale = parseFloat(cv.dataset.scale || '1') || 1;
+            const step = 0.25;
+            if (zoomOut) scale = Math.max(0.25, scale - step);
+            if (zoomIn) scale = Math.min(maxScale, scale + step);
+            cv.dataset.scale = String(scale);
+            drawBins(cv);
+            updateZoomButtonsState(row);
+          }
+          return;
+        }
+
+        
+
+        // Time zoom in/out buttons
+        const hzIn = e.target.closest('.btn-hz-in');
+        const hzOut = e.target.closest('.btn-hz-out');
+        if (hzIn || hzOut) {
+          const row = e.target.closest('tr');
+          const wrap = row ? row.querySelector('.wave-wrap') : null;
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          if (!wrap || !cv) return;
+          let hzoom = parseFloat(cv.dataset.hzoom || '1'); if (!isFinite(hzoom) || hzoom < 1) hzoom = 1;
+          const playFrac = wrap.dataset.playhead ? parseFloat(wrap.dataset.playhead) : null;
+          if (hzIn) hzoom = Math.min(32, hzoom * 1.5);
+          if (hzOut) hzoom = Math.max(1, hzoom / 1.5);
+          const prev = getViewport(cv);
+          cv.dataset.hzoom = String(hzoom);
+          const visible = 1 / hzoom; const maxOff = Math.max(0, 1 - visible);
+          let hoff = prev.hoff;
+          if (playFrac != null && isFinite(playFrac)) {
+            // Keep playhead centered when possible
+            hoff = Math.max(0, Math.min(maxOff, playFrac - visible/2));
+          } else {
+            hoff = Math.max(0, Math.min(maxOff, hoff));
+          }
+          cv.dataset.hoff = String(hoff);
+          drawBins(cv); updateHScroll(wrap);
+          // Update head position
+          const head = wrap.querySelector('.wave-head');
+          if (head) {
+            const rel = visible > 0 ? ((playFrac!=null && isFinite(playFrac) ? playFrac : hoff) - hoff) / visible : 0;
+            head.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+          }
+          return;
+        }
+
+        // Click on horizontal scroll track to reposition viewport
+        const hscroll = e.target.closest('.hscroll');
+        if (hscroll && !e.target.closest('.hthumb')) {
+          const wrap = hscroll.closest('.wave-wrap');
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          if (!wrap || !cv) return;
+          const rect = hscroll.getBoundingClientRect();
+          const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+          const frac = rect.width ? (x / rect.width) : 0;
+          let hzoom = parseFloat(cv.dataset.hzoom || '1'); if (!isFinite(hzoom) || hzoom < 1) hzoom = 1;
+          const visible = 1 / hzoom; const maxOff = Math.max(0, 1 - visible);
+          let hoff = Math.max(0, Math.min(maxOff, frac - visible/2));
+          cv.dataset.hoff = String(hoff);
+          drawBins(cv); updateHScroll(wrap);
+          // Update head relative position if playhead exists
+          const head = wrap.querySelector('.wave-head');
+          const pf = wrap.dataset.playhead ? parseFloat(wrap.dataset.playhead) : null;
+          if (head && pf != null && isFinite(pf)) {
+            const rel = visible > 0 ? (pf - hoff) / visible : 0;
+            head.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+          }
+          return;
+        }
+
+      // Clear Spaces action (repurposed former Split button)
+      const splitBtn = e.target.closest('.btn-split');
+      if (splitBtn) {
+        const row = splitBtn.closest('tr.file-row');
+        const area = row ? row.querySelector('.label-textarea') : null;
+        if (area) {
+          clearSpacesInArea(area);
+        } else {
+          showToast('No label field found', 'error');
+        }
+        return;
+      }
+
+        // Apply Trim in-place with quick replacement animation
+        const trimBtn = e.target.closest('.btn-trim');
+        if (trimBtn) {
+          if (trimBtn.closest('tr.file-row')?.classList.contains('locked')) { showToast('Record is locked', 'error'); return; }
+          const row = trimBtn.closest('tr');
+          const id = trimBtn.dataset.id;
+          const filename = trimBtn.dataset.filename;
+          const wrap = row ? row.querySelector('.wave-wrap') : null;
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          const link = row ? row.querySelector('a.file-link') : null;
+          const timeLink = row ? row.querySelector('a.time-link') : null;
+          if (!wrap || !cv || !link) { alert('Waveform not ready'); return; }
+          const duration = cv && cv._durationSec ? cv._durationSec : (parseInt(wrap.getAttribute('data-duration')||'0',10) || 0);
+          if (!duration) { alert('Duration unknown yet. Please wait a moment.'); return; }
+          const leftHandle = wrap.querySelector('.handle.left');
+          const rightHandle = wrap.querySelector('.handle.right');
+          const leftPercent = parseFloat((leftHandle.style.left||'0%').replace('%','')) || 0;
+          const rightPercent = 100 - (parseFloat((rightHandle.style.right||'0%').replace('%','')) || 0);
+          const leftFrac = Math.max(0, Math.min(1, leftPercent/100));
+          const rightFrac = Math.max(leftFrac + 0.001, Math.min(1, rightPercent/100));
+          const start_ms = Math.floor(leftFrac * duration * 1000);
+          const end_ms = Math.floor(rightFrac * duration * 1000);
+
+          // Show quick replacement animation
+          wrap.classList.add('replacing');
+          const skel = wrap.querySelector('.wave-skel');
+          if (skel) skel.style.display = 'block';
+          const originalText = trimBtn.textContent;
+          trimBtn.disabled = true; trimBtn.textContent = 'Trimming…';
+          try {
+            const payload = Object.assign({}, id ? { id: Number(id) } : { filename }, { start_ms, end_ms });
+            const r = await fetch('/trim', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            if (!r.ok) {
+              try { const err = await r.json(); alert(err.error || 'Failed to trim'); } catch { alert('Failed to trim'); }
+            } else {
+              const js = await r.json();
+              // Update duration UI
+              const d = js && js.duration_seconds ? Number(js.duration_seconds) : Math.round((end_ms - start_ms)/1000);
+              const m = Math.floor(d/60), s = d%60;
+              if (timeLink) timeLink.textContent = `${m}:${String(s).padStart(2,'0')}`;
+              wrap.setAttribute('data-duration', String(d));
+              // Reset trim selection to full range
+              const sel = wrap.querySelector('.sel');
+              const dimL = wrap.querySelector('.wave-dim.left');
+              const dimR = wrap.querySelector('.wave-dim.right');
+              if (leftHandle) leftHandle.style.left = '0%';
+              if (rightHandle) rightHandle.style.right = '0%';
+              if (sel) { sel.style.left = '0%'; sel.style.right = '0%'; }
+              if (dimL) dimL.style.width = '0%';
+              if (dimR) dimR.style.width = '0%';
+              // Bust cache on URLs
+              const bust = (u) => u + (u.includes('?') ? '&' : '?') + 'v=' + Date.now();
+              const href = link.getAttribute('href');
+              if (href) link.setAttribute('href', bust(href.split('#')[0]));
+              const tlHref = timeLink ? timeLink.getAttribute('href') : null;
+              if (timeLink && tlHref) timeLink.setAttribute('href', bust(tlHref.split('#')[0]));
+              // Refresh waveform bins
+              cv.dataset.rendered = '';
+              cv._bins = null; cv._durationSec = null;
+              const curUrl = cv.getAttribute('data-url');
+              if (curUrl) cv.setAttribute('data-url', bust(curUrl.split('#')[0]));
+              await attachWaveforms(row);
+              // Flash replaced state
+              wrap.classList.remove('replacing');
+              wrap.classList.add('replaced');
+              setTimeout(() => wrap.classList.remove('replaced'), 700);
+            }
+          } catch {
+            alert('Failed to trim');
+          } finally {
+            trimBtn.disabled = false; trimBtn.textContent = originalText;
+            const skel = wrap.querySelector('.wave-skel');
+            if (skel) skel.style.display = 'none';
+          }
+          return;
+        }
+        // Clicking on the filename should behave like Restart (not open link)
+        const fileLink = e.target.closest('.file-link');
+        if (fileLink) {
+          e.preventDefault();
+          // Delegate to the same logic as reset
+          const row = fileLink.closest('tr');
+          const link = row.querySelector('.file-link');
+          const href = link.getAttribute('href');
+          const nameCell = row.querySelector('td.name') || row.querySelector('td');
+          const wrap = nameCell ? nameCell.querySelector('.wave-wrap') : null;
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          const duration = cv && cv._durationSec ? cv._durationSec : (wrap ? parseInt(wrap.getAttribute('data-duration')||'0',10) : 0);
+          const leftHandle = wrap ? wrap.querySelector('.handle.left') : null;
+          const rightHandle = wrap ? wrap.querySelector('.handle.right') : null;
+          let leftFrac = 0, rightFrac = 1;
+          if (leftHandle && rightHandle && duration) {
+            const leftPercent = parseFloat((leftHandle.style.left||'0%').replace('%','')) || 0;
+            const rightPercent = 100 - (parseFloat((rightHandle.style.right||'0%').replace('%','')) || 0);
+            const cv = wrap.querySelector('canvas.wave');
+            const vp = cv ? getViewport(cv) : { visibleFrac:1, hoff:0 };
+            // Convert viewport fractions to global fractions
+            leftFrac = vp.hoff + (leftPercent/100) * vp.visibleFrac;
+            rightFrac = vp.hoff + (rightPercent/100) * vp.visibleFrac;
+          }
+          const startSec = duration ? Math.max(0, leftFrac * duration) : 0;
+          const endSec = duration ? Math.max(startSec + 0.01, rightFrac * duration) : null;
+
+          // Clear any previous row UI state
+          if (currentPlayingLink && currentPlayingLink !== link) {
+            currentPlayingLink.closest('td').classList.remove('playing');
+            const oldPlayBtn = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+            if (oldPlayBtn) oldPlayBtn.classList.replace('fa-pause', 'fa-play');
+          }
+
+          // Set and reveal the playhead
+          const headEl = wrap ? wrap.querySelector('.wave-head') : null;
+          currentWaveHead = headEl;
+          if (headEl) {
+            headEl.style.opacity = '1';
+            const initFrac = duration ? (startSec / duration) : 0;
+            const vp = cv ? getViewport(cv) : { visibleFrac:1, hoff:0 };
+            const rel = vp.visibleFrac > 0 ? (initFrac - vp.hoff) / vp.visibleFrac : 0;
+            const clamped = Math.max(0, Math.min(1, rel));
+            headEl.style.left = `${clamped*100}%`;
+            wrap.dataset.playhead = String(initFrac);
+          }
+
+          // Determine if this is the same source (include query to catch cache-bust changes)
+          let isSame = false;
+          try {
+            const a = new URL(player.src || '', window.location.href);
+            const b = new URL(href, window.location.href);
+            isSame = (a.origin === b.origin && a.pathname === b.pathname && a.search === b.search);
+          } catch {
+            isSame = (player.src || '') === href;
+          }
+
+          // Rebuild timeupdate for this restart
+          if (onTimeUpdate) { try { player.removeEventListener('timeupdate', onTimeUpdate); } catch {} }
+          onTimeUpdate = () => {
+            if (endSec != null && player.currentTime >= endSec) { player.pause(); }
+            if (currentWaveHead && duration) {
+              const frac = Math.min(1, Math.max(0, player.currentTime / duration));
+              const vp = cv ? getViewport(cv) : { visibleFrac:1, hoff:0 };
+              const rel = vp.visibleFrac > 0 ? (frac - vp.hoff) / vp.visibleFrac : 0;
+              currentWaveHead.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+              wrap.dataset.playhead = frac;
+            }
+          };
+          segmentEndSec = endSec;
+          currentPlayingLink = link;
+
+          userWantsPlay = true;
+          if (isSame) {
+            player.addEventListener('timeupdate', onTimeUpdate);
+            try { player.currentTime = startSec; } catch {}
+            player.play();
+          } else {
+            const bust = href + (href.includes('?') ? '&' : '?') + 'v=' + Date.now();
+            player.src = bust;
+            if (onLoadedMetadata) { try { player.removeEventListener('loadedmetadata', onLoadedMetadata); } catch {} }
+            onLoadedMetadata = function lm(){
+              player.removeEventListener('loadedmetadata', lm);
+              onLoadedMetadata = null;
+              player.addEventListener('timeupdate', onTimeUpdate);
+              try { player.currentTime = startSec; } catch {}
+              if (userWantsPlay) player.play();
+            };
+            player.addEventListener('loadedmetadata', onLoadedMetadata);
+          }
+          return;
+        }
+
+        // Restart from the beginning (or left trim)
+        const resetBtn = e.target.closest('.btn-reset');
+        if (resetBtn) {
+          const row = resetBtn.closest('tr');
+          const link = row.querySelector('.file-link');
+          const href = link.getAttribute('href');
+          const nameCell = row.querySelector('td.name') || row.querySelector('td');
+          const wrap = nameCell ? nameCell.querySelector('.wave-wrap') : null;
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          const duration = cv && cv._durationSec ? cv._durationSec : (wrap ? parseInt(wrap.getAttribute('data-duration')||'0',10) : 0);
+          const leftHandle = wrap ? wrap.querySelector('.handle.left') : null;
+          const rightHandle = wrap ? wrap.querySelector('.handle.right') : null;
+          let leftFrac = 0, rightFrac = 1;
+          if (leftHandle && rightHandle && duration) {
+            const leftPercent = parseFloat((leftHandle.style.left||'0%').replace('%','')) || 0;
+            const rightPercent = 100 - (parseFloat((rightHandle.style.right||'0%').replace('%','')) || 0);
+            const cv = wrap.querySelector('canvas.wave');
+            const vp = cv ? getViewport(cv) : { visibleFrac:1, hoff:0 };
+            leftFrac = vp.hoff + (leftPercent/100) * vp.visibleFrac;
+            rightFrac = vp.hoff + (rightPercent/100) * vp.visibleFrac;
+          }
+          const startSec = duration ? Math.max(0, leftFrac * duration) : 0;
+          const endSec = duration ? Math.max(startSec + 0.01, rightFrac * duration) : null;
+
+          // Clear any previous row UI state
+          if (currentPlayingLink && currentPlayingLink !== link) {
+            currentPlayingLink.closest('td').classList.remove('playing');
+            const oldPlayBtn = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+            if (oldPlayBtn) oldPlayBtn.classList.replace('fa-pause', 'fa-play');
+          }
+
+          // Set and reveal the playhead
+          const headEl = wrap ? wrap.querySelector('.wave-head') : null;
+          currentWaveHead = headEl;
+          if (headEl) {
+            headEl.style.opacity = '1';
+            const initFrac = duration ? (startSec / duration) : 0;
+            const vp = cv ? getViewport(cv) : { visibleFrac:1, hoff:0 };
+            const rel = vp.visibleFrac > 0 ? (initFrac - vp.hoff) / vp.visibleFrac : 0;
+            const clamped = Math.max(0, Math.min(1, rel));
+            headEl.style.left = `${clamped*100}%`;
+            wrap.dataset.playhead = String(initFrac);
+          }
+
+          // Determine if this is the same source (include query to catch cache-bust changes)
+          let isSame = false;
+          try {
+            const a = new URL(player.src || '', window.location.href);
+            const b = new URL(href, window.location.href);
+            isSame = (a.origin === b.origin && a.pathname === b.pathname && a.search === b.search);
+          } catch {
+            isSame = (player.src || '') === href;
+          }
+
+          // Rebuild timeupdate for this restart
+          if (onTimeUpdate) { try { player.removeEventListener('timeupdate', onTimeUpdate); } catch {} }
+          onTimeUpdate = () => {
+            if (endSec != null && player.currentTime >= endSec) { player.pause(); }
+            if (currentWaveHead && duration) {
+              const frac = Math.min(1, Math.max(0, player.currentTime / duration));
+              const vp = cv ? getViewport(cv) : { visibleFrac:1, hoff:0 };
+              const rel = vp.visibleFrac > 0 ? (frac - vp.hoff) / vp.visibleFrac : 0;
+              currentWaveHead.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+              wrap.dataset.playhead = frac;
+            }
+          };
+          segmentEndSec = endSec;
+          currentPlayingLink = link;
+
+          userWantsPlay = true;
+          if (isSame) {
+            player.addEventListener('timeupdate', onTimeUpdate);
+            try { player.currentTime = startSec; } catch {}
+            player.play();
+          } else {
+            const bust = href + (href.includes('?') ? '&' : '?') + 'v=' + Date.now();
+            player.src = bust;
+            if (onLoadedMetadata) { try { player.removeEventListener('loadedmetadata', onLoadedMetadata); } catch {} }
+            onLoadedMetadata = function lm(){
+              player.removeEventListener('loadedmetadata', lm);
+              onLoadedMetadata = null;
+              player.addEventListener('timeupdate', onTimeUpdate);
+              try { player.currentTime = startSec; } catch {}
+              if (userWantsPlay) player.play();
+            };
+            player.addEventListener('loadedmetadata', onLoadedMetadata);
+          }
+          return;
+        }
+
+        const playBtn = e.target.closest('.btn-play');
+        if (playBtn) {
+          const row = playBtn.closest('tr');
+          const link = row.querySelector('.file-link');
+          const href = link.getAttribute('href');
+
+          // Determine if clicked audio matches current player source (include query to catch cache-busting)
+          let isSame = false;
+          try {
+            const a = new URL(player.src || '', window.location.href);
+            const b = new URL(href, window.location.href);
+            isSame = (a.origin === b.origin && a.pathname === b.pathname && a.search === b.search);
+          } catch {
+            isSame = (player.src || '') === href;
+          }
+
+          // Prefer row identity for toggle semantics; URL may change (cache-bust)
+          const isSameRow = !!currentPlayingLink && currentPlayingLink === link;
+
+          if (isSameRow && !player.paused) {
+            // User explicitly paused; prevent any pending auto-play on loadedmetadata
+            userWantsPlay = false;
+            // Update UI immediately (don't rely on async pause event)
+            try {
+              if (currentPlayingLink) {
+                const icon = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+                if (icon) icon.classList.replace('fa-pause', 'fa-play');
+                currentPlayingLink.closest('td').classList.remove('playing');
+              }
+            } catch {}
+            // Remove any pending handlers
+            if (onLoadedMetadata) { try { player.removeEventListener('loadedmetadata', onLoadedMetadata); } catch {} onLoadedMetadata = null; }
+            if (onTimeUpdate) { try { player.removeEventListener('timeupdate', onTimeUpdate); } catch {} onTimeUpdate = null; }
+            segmentEndSec = null;
+            // Unload the source to guarantee stop
+            try { player.pause(); } catch {}
+            try { player.currentTime = 0; } catch {}
+            try { player.removeAttribute('src'); } catch {}
+            try { player.srcObject = null; } catch {}
+            try { player.load(); } catch {}
+            currentPlayingLink = null;
+            return;
+          }
+
+          
+          if (currentPlayingLink) {
+            currentPlayingLink.closest('td').classList.remove('playing');
+            const oldPlayBtn = currentPlayingLink.closest('tr').querySelector('.btn-play i');
+            if(oldPlayBtn) oldPlayBtn.classList.replace('fa-pause', 'fa-play');
+          }
+
+          currentPlayingLink = link;
+
+          const nameCell = currentPlayingLink.closest('td');
+          const wrap = nameCell ? nameCell.querySelector('.wave-wrap') : null;
+          const cv = wrap ? wrap.querySelector('canvas.wave') : null;
+          const duration = cv && cv._durationSec ? cv._durationSec : (wrap ? parseInt(wrap.getAttribute('data-duration')||'0',10) : 0);
+          
+          const leftHandle = wrap ? wrap.querySelector('.handle.left') : null;
+          const rightHandle = wrap ? wrap.querySelector('.handle.right') : null;
+          let leftFrac = 0, rightFrac = 1;
+          if (leftHandle && rightHandle && duration) {
+            const leftPercent = parseFloat((leftHandle.style.left||'0%').replace('%','')) || 0;
+            const rightPercent = 100 - (parseFloat((rightHandle.style.right||'0%').replace('%','')) || 0);
+            leftFrac = leftPercent/100; rightFrac = rightPercent/100;
+          }
+
+          const headFrac = wrap && wrap.dataset.playhead ? parseFloat(wrap.dataset.playhead) : null;
+          const startSec = headFrac != null ? Math.max(0, headFrac * duration) : Math.max(0, leftFrac * duration);
+          const endSec = Math.max(startSec + 0.01, rightFrac * duration);
+
+          // Initialize and reveal the playhead for this row
+          const headEl = wrap ? wrap.querySelector('.wave-head') : null;
+          currentWaveHead = headEl;
+          if (headEl) {
+            headEl.style.opacity = '1';
+            const initFrac = duration ? (startSec / duration) : 0;
+            headEl.style.left = `${Math.max(0, Math.min(1, initFrac))*100}%`;
+            wrap.dataset.playhead = String(Math.max(0, Math.min(1, initFrac)));
+          }
+
+          if (onTimeUpdate) { try { player.removeEventListener('timeupdate', onTimeUpdate); } catch {} }
+          onTimeUpdate = () => {
+            if (segmentEndSec != null && player.currentTime >= segmentEndSec) { 
+              player.pause();
+            }
+            if (currentWaveHead && duration) {
+              const frac = Math.min(1, Math.max(0, player.currentTime / duration));
+              currentWaveHead.style.left = `${frac*100}%`;
+              wrap.dataset.playhead = frac;
+            }
+          };
+          
+          segmentEndSec = endSec;
+
+          const start = () => {
+            player.currentTime = startSec;
+            if (userWantsPlay) player.play();
+          };
+
+          const bust = href + (href.includes('?') ? '&' : '?') + 'v=' + Date.now();
+          player.src = bust;
+          userWantsPlay = true;
+          if (onLoadedMetadata) { try { player.removeEventListener('loadedmetadata', onLoadedMetadata); } catch {} }
+          onLoadedMetadata = function lm(){ 
+              player.removeEventListener('loadedmetadata', lm);
+              onLoadedMetadata = null; 
+              player.addEventListener('timeupdate', onTimeUpdate);
+              start(); 
+            };
+          player.addEventListener('loadedmetadata', onLoadedMetadata);
+
+          return;
+        }
+
+        // Save transcript only (no verify)
+        const saveBtn = e.target.closest('.btn-save');
+        if (saveBtn) {
+          const row = saveBtn.closest('tr.file-row');
+          if (row && row.classList.contains('locked')) { showToast('Record is locked', 'error'); return; }
+          const filename = saveBtn.dataset.filename;
+          const id = saveBtn.dataset.id ? Number(saveBtn.dataset.id) : null;
+          const area = tbody.querySelector(`.label-textarea[data-filename="${filename}"]`);
+          if (!area) return;
+          const original = saveBtn.textContent;
+          saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+          try {
+            const r = await fetch('/label', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, filename, label: getEditorText(area) || '' }) });
+            if (!r.ok) {
+              try { const err = await r.json(); alert(err.error || 'Failed to save'); } catch { alert('Failed to save'); }
+            }
+          } catch { alert('Failed to save'); } finally {
+            saveBtn.disabled = false; saveBtn.textContent = original;
+          }
+          return;
+        }
+
+        // Generate transcript
+        const genBtn = e.target.closest('.btn-gen');
+        if (genBtn) {
+          const row = genBtn.closest('tr.file-row');
+          if (row && row.classList.contains('locked')) { showToast('Record is locked', 'error'); return; }
+          const filename = genBtn.dataset.filename;
+          const id = genBtn.dataset.id ? Number(genBtn.dataset.id) : null;
+          const originalText = genBtn.textContent;
+          genBtn.disabled = true; genBtn.textContent = 'Gen…';
+          try {
+            const r = await fetch('/gen', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id, filename, prompt: DEFAULT_PROMPT }) });
+            if (r.ok) {
+              const data = await r.json();
+              const cleaned = (data && data.transcript) ? data.transcript : null;
+              if (cleaned) {
+                let area = tbody.querySelector(`.label-textarea[data-filename="${filename}"]`);
+                if (!area) {
+                  const row = genBtn.closest('tr');
+                  const cell = row ? row.querySelector('td.label-cell') : null;
+                  if (cell) {
+                    cell.innerHTML = `<div class=\"label-textarea\" contenteditable=\"true\" data-filename=\"${filename}\"></div>`;
+                    area = cell.querySelector('.label-textarea');
+                  }
+                }
+                if (area) { setEditorText(area, cleaned, false); attachHistoryToTextarea(area); }
+              }
+            } else {
+              try { const err = await r.json(); alert(err.error || 'Failed to generate transcript'); } catch { alert('Failed to generate transcript'); }
+            }
+          } catch (err) {
+            alert('Failed to generate transcript');
+          } finally {
+            genBtn.disabled = false; genBtn.textContent = originalText;
+          }
+          return;
+        }
+
+        const btn = e.target.closest('button[data-filename][data-verified]');
+        if (!btn) return;
+        {
+          const row = btn.closest('tr.file-row');
+          if (row && row.classList.contains('locked')) { showToast('Record is locked', 'error'); return; }
+        }
+        const filename = btn.dataset.filename;
+        const id = btn.dataset.id || (btn.closest('tr') ? btn.closest('tr').getAttribute('data-id') : null);
+        const current = btn.getAttribute('data-verified') === 'true';
+        const next = !current;
+        try {
+          // Save transcript only when verifying (turning true)
+          if (next) {
+            const area = tbody.querySelector(`.label-textarea[data-filename="${filename}"]`);
+            if (area) {
+              const text = (getEditorText(area) || '').trim();
+              if (text.length > 0) {
+                await fetch('/label', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: id ? Number(id) : null, filename, label: text }) });
+              }
+            }
+          }
+          // Optimistic UI update for instant feedback
+          btn.setAttribute('data-verified', next ? 'true' : 'false');
+          btn.textContent = next ? 'Verified' : 'Verify';
+          if (next) { btn.classList.remove('btn-slate'); btn.classList.add('btn-verify'); }
+          else { btn.classList.remove('btn-verify'); if (!btn.classList.contains('btn-slate')) btn.classList.add('btn-slate'); }
+          const payload = id ? { id: Number(id), verified: next } : { filename, verified: next };
+          const r = await fetch('/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          if (!r.ok) {
+            // revert UI if failed
+            btn.setAttribute('data-verified', current ? 'true' : 'false');
+            btn.textContent = current ? 'Verified' : 'Verify';
+            if (current) { btn.classList.add('btn-verify'); btn.classList.remove('btn-slate'); }
+            else { btn.classList.remove('btn-verify'); if (!btn.classList.contains('btn-slate')) btn.classList.add('btn-slate'); }
+            try { const err = await r.json(); alert(err.error || 'Failed to update verify'); } catch { alert('Failed to update verify'); }
+          }
+        } catch {}
+      });
+
+      // Draggable playhead (on waveform and on the head itself)
+      (function enablePlayheadDrag() {
+        let draggingWrap = null;
+        function setPlayhead(wrap, clientX, seek) {
+          const cv = wrap.querySelector('canvas.wave');
+          const head = wrap.querySelector('.wave-head');
+          if (!cv || !head) return;
+          const rect = cv.getBoundingClientRect();
+          const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+          const vp = getViewport(cv);
+          let vfrac = rect.width ? (x / rect.width) : 0;
+          let gfrac = vp.hoff + vfrac * vp.visibleFrac;
+          gfrac = Math.max(0, Math.min(1, gfrac));
+          wrap.dataset.playhead = String(gfrac);
+          head.style.opacity = '1';
+          const rel = vp.visibleFrac > 0 ? (gfrac - vp.hoff) / vp.visibleFrac : 0;
+          head.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+          if (seek && currentPlayingLink) {
+            const row = wrap.closest('tr');
+            if (row && currentPlayingLink.closest('tr') === row) {
+              const duration = parseInt(wrap.getAttribute('data-duration')||'0',10) || 0;
+              if (duration) {
+                const sec = Math.max(0, Math.min(duration-0.5, gfrac * duration));
+                try { player.currentTime = sec; } catch {}
+              }
+            }
+          }
+        }
+        tbody.addEventListener('mousedown', (e) => {
+          const head = e.target.closest('.wave-head');
+          const cv = e.target.closest('canvas.wave');
+          const hthumb = e.target.closest('.hthumb');
+          if (!head && !cv && !hthumb) return;
+          const wrap = (head || cv || hthumb).closest('.wave-wrap');
+          if (!wrap) return;
+          if (hthumb) {
+            // Drag horizontal scroll thumb
+            e.preventDefault();
+            const cv2 = wrap.querySelector('canvas.wave');
+            const vp0 = getViewport(cv2);
+            const track = wrap.querySelector('.hscroll');
+            const rect = track.getBoundingClientRect();
+            const startX = e.clientX;
+            const startOff = vp0.hoff;
+            function onMove(ev){
+              const dx = ev.clientX - startX;
+              const frac = rect.width ? dx / rect.width : 0;
+              let hzoom = parseFloat(cv2.dataset.hzoom || '1'); if (!isFinite(hzoom) || hzoom < 1) hzoom = 1;
+              const visible = 1 / hzoom; const maxOff = Math.max(0, 1 - visible);
+              let hoff = Math.max(0, Math.min(maxOff, startOff + frac));
+              cv2.dataset.hoff = String(hoff);
+              drawBins(cv2); updateHScroll(wrap);
+              // Reposition head if we have playhead stored
+              const headEl = wrap.querySelector('.wave-head');
+              const pf = wrap.dataset.playhead ? parseFloat(wrap.dataset.playhead) : null;
+              if (headEl && pf != null && isFinite(pf)) {
+                const rel = visible > 0 ? (pf - hoff) / visible : 0;
+                headEl.style.left = `${Math.max(0, Math.min(1, rel))*100}%`;
+              }
+            }
+            function onUp(){ window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+          } else {
+            draggingWrap = wrap;
+            e.preventDefault();
+            setPlayhead(draggingWrap, e.clientX, true);
+            function onMove(ev) { if (draggingWrap) setPlayhead(draggingWrap, ev.clientX, true); }
+            function onUp() { draggingWrap = null; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); }
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+          }
+        });
+      })();
+
+      // Delete record (confirm modal, no password)
+      tbody.addEventListener('click', async (e) => {
+        const del = e.target.closest('.btn-delete');
+        if (!del) return;
+        const filename = del.dataset.filename;
+        const ok = await showConfirm('Delete this record?', 'Delete Audio');
+        if (!ok) return;
+        try {
+          const r = await fetch('/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename }) });
+          if (r.ok) {
+            await loadPage();
+          } else {
+            try { const err = await r.json(); alert(err.error || 'Failed to delete'); } catch { alert('Failed to delete'); }
+          }
+        } catch { alert('Failed to delete'); }
+      });
+
+      // Change language/gender and edit speaker
+      tbody.addEventListener('change', async (e) => {
+        const langSel = e.target.closest('.lang-select');
+        if (langSel) {
+          const filename = langSel.dataset.filename; const lang = langSel.value;
+          try { await fetch('/lang', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename, lang }) }); } catch {}
+          return;
+        }
+        const genderSel = e.target.closest('.gender-select');
+        if (genderSel) {
+          const filename = genderSel.dataset.filename; const gender = genderSel.value;
+          try { await fetch('/gender', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ filename, gender }) }); } catch {}
+          return;
+        }
+      });
+
+      // Speaker column removed
+
+      // No-op: always using textarea now for label editing
+    </script>
+
+    </div>
+  </body>
+</html>

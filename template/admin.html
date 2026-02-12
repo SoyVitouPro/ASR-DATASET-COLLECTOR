@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin • {{ app_name }}</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: '#22d3ee',
+              accent: '#8b5cf6',
+              bg: '#0f172a',
+              panel: '#0b1220',
+            },
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(1200px 600px at 20% 0%, rgba(34,211,238,0.06), transparent)',
+              'gradient-radial-2': 'radial-gradient(1200px 600px at 80% 100%, rgba(139,92,246,0.08), transparent)',
+            },
+            keyframes: {
+              spin: {
+                '0%': { transform: 'rotate(0deg)' },
+                '100%': { transform: 'rotate(360deg)' },
+              },
+            },
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-slate-900 text-gray-200 min-h-screen bg-gradient-to-br from-slate-900 via-gradient-radial to-slate-900 bg-gradient-radial-2">
+    <div class="container max-w-4xl mx-auto px-5 py-6">
+      <header class="flex justify-between items-center mb-10">
+        <div class="text-2xl font-bold text-cyan-400">{{ app_name }} Admin</div>
+        <a href="/" class="text-gray-400 hover:text-gray-200 px-4 py-2 rounded-lg transition-all duration-200 hover:bg-white/10">← Back to Home</a>
+      </header>
+
+      <main>
+        <section class="bg-slate-800/95 border border-slate-700 rounded-xl p-6 mb-6 backdrop-blur-sm">
+          <h2 class="text-xl font-semibold text-cyan-400 mb-5">YouTube Audio Processor</h2>
+          <form id="job-form" class="space-y-4" action="/process" method="post">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-200">Video URL</label>
+              <input class="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-900/60 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200" type="url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." required />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-gray-200">YouTube Channel (optional)</label>
+              <input class="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-900/60 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200" type="text" name="youtube_channel" placeholder="Channel name" />
+            </div>
+            <div class="flex flex-wrap gap-4">
+              <div class="flex-1 min-w-[200px] space-y-2">
+                <label class="text-sm font-medium text-gray-200">Min seconds (7–25)</label>
+                <input class="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-900/60 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200" type="number" name="min_seconds" min="7" max="25" value="7" />
+              </div>
+              <div class="flex-1 min-w-[200px] space-y-2">
+                <label class="text-sm font-medium text-gray-200">Max seconds (7–25)</label>
+                <input class="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-900/60 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200" type="number" name="max_seconds" min="7" max="25" value="25" />
+              </div>
+            </div>
+            <div>
+              <button id="start-btn" class="px-6 py-3 bg-gradient-to-r from-cyan-400 to-violet-500 text-slate-900 font-semibold rounded-lg hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-400/30 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none" type="submit">Start Processing</button>
+            </div>
+          </form>
+          <div id="form_error" class="hidden mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300"></div>
+          <div id="form_success" class="hidden mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/90 hidden items-center justify-center z-50">
+      <div class="text-center">
+        <div class="w-12 h-12 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin mx-auto mb-4"></div>
+        <div id="loading-text" class="text-gray-200 text-base">Processing...</div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('job-form');
+      const overlay = document.getElementById('loading-overlay');
+      const loadingText = document.getElementById('loading-text');
+      const errorDiv = document.getElementById('form_error');
+      const successDiv = document.getElementById('form_success');
+      const startBtn = document.getElementById('start-btn');
+
+      function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        successDiv.style.display = 'none';
+      }
+
+      function showSuccess(message) {
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+        errorDiv.style.display = 'none';
+      }
+
+      function hideMessages() {
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideMessages();
+
+        const formData = new FormData(form);
+        startBtn.disabled = true;
+        startBtn.textContent = 'Starting...';
+
+        try {
+          const response = await fetch('/process', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            showError(result.error || 'Processing failed');
+            return;
+          }
+
+          overlay.style.display = 'flex';
+          loadingText.textContent = 'Processing started. Job ID: ' + result.job_id;
+
+          // Poll for job status
+          const jobId = result.job_id;
+          const checkStatus = async () => {
+            try {
+              const statusResponse = await fetch(`/status/${jobId}`);
+              const status = await statusResponse.json();
+
+              if (status.status === 'error') {
+                overlay.style.display = 'none';
+                showError('Processing failed: ' + status.error);
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Processing';
+              } else if (status.status === 'done') {
+                overlay.style.display = 'none';
+                showSuccess(`Processing completed! Generated ${status.count} audio segments.`);
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Processing';
+                form.reset();
+              } else {
+                loadingText.textContent = `Status: ${status.status}...`;
+                setTimeout(checkStatus, 2000);
+              }
+            } catch (err) {
+              overlay.style.display = 'none';
+              showError('Failed to check job status');
+              startBtn.disabled = false;
+              startBtn.textContent = 'Start Processing';
+            }
+          };
+
+          checkStatus();
+
+        } catch (err) {
+          showError('Network error: ' + err.message);
+          startBtn.disabled = false;
+          startBtn.textContent = 'Start Processing';
+        }
+      });
+    </script>
+  </body>
+</html>
